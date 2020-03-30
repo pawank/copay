@@ -66,3 +66,4 @@ All subsequent API must check for `X-Auth-Token` header key for the `session` va
 The expiry of session to be handled at the server for now for the MVP.
 
 Rest all API are following convention mentioned in the doc: https://github.com/typicode/json-server. 
+The sample JSON objects are placed inside jsonserver folder. 
