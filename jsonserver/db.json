@@ -1,0 +1,206 @@
+{
+  "countries": [
+    {
+      "id": 1,
+      "code": "IN",
+      "name": "India"
+    },
+    {
+      "id": 2,
+      "code": "SL",
+      "name": "Sri Lanka"
+    },
+    {
+      "id": 3,
+      "code": "UK",
+      "name": "United Kingdom"
+    }
+  ],
+  "states": [
+    {
+      "id": 1,
+      "country": "IN",
+      "name": "Karnataka"
+    },
+    {
+      "id": 2,
+      "country": "IN",
+      "name": "Haryana"
+    }
+  ],
+  "cities": [
+    {
+      "id": 1,
+      "country": "IN",
+      "name": "Bengaluru",
+      "state": "Karnataka"
+    },
+    {
+      "id": 2,
+      "country": "IN",
+      "name": "Mysuru",
+      "state": "Karnataka"
+    }
+  ],
+  "auth": [
+    {
+      "id": 1,
+      "version": "1.0",
+      "username": "pawan",
+      "session": "1"
+    },
+    {
+      "id": 2,
+      "version": "1.0",
+      "username": "alok",
+      "session": "test1"
+    },
+    {
+      "id": 3,
+      "version": "1.0",
+      "username": "nitish",
+      "session": "test3"
+    },
+    {
+      "version": "1.0",
+      "username": "username or email",
+      "password": "sample",
+      "id": 4
+    }
+  ],
+  "shares": [
+    {
+      "userId": 1,
+      "name": "Pawan Kumar",
+      "email": "pawan@gmail.com",
+      "mobile": "+918111111111",
+      "sharedOn": "2020-03-30T11:10:10.500Z"
+    },
+    {
+      "userId": 2,
+      "name": "Alok",
+      "email": "alok@gmail.com",
+      "mobile": "+918111111112",
+      "sharedOn": "2020-03-30T11:10:10.500Z"
+    }
+  ],
+  "users": [
+    {
+      "id": 1,
+      "username": "pawan",
+      "name": "Pawan Kumar",
+      "email": "pawan@gmail.com",
+      "mobile": "+918111111111",
+      "address": "302 SSA, Bengalore",
+      "pincode": "560064",
+      "city": "Bengaluru",
+      "country": "India",
+      "calls": [
+        1,
+        2
+      ],
+      "totalDonation": "$10000"
+    },
+    {
+      "id": 2,
+      "username": "alok",
+      "name": "Alok",
+      "email": "alok@gmail.com",
+      "mobile": "+918111111112",
+      "address": "302 SSA, Bengalore",
+      "pincode": "560010",
+      "city": "Bengaluru",
+      "country": "India",
+      "calls": [],
+      "totalDonation": "Rs 0.00"
+    }
+  ],
+  "receivers": [
+    {
+      "id": 1,
+      "name": "Kanta bai",
+      "mobile": "890880809",
+      "altPhoneNo": "",
+      "address": "32 832, 1st basti, BG",
+      "identity": [
+        {
+          "no": "678678687",
+          "type": "Aadhaar",
+          "ref": "secure url to fetch the image"
+        },
+        {
+          "no": "AMTPK5656",
+          "type": "PAN Card",
+          "ref": "secure link to PAN card"
+        }
+      ],
+      "totalDonation": "Rs 5000.00"
+    },
+    {
+      "id": 2,
+      "name": "Kids NGO",
+      "mobile": "8908808091",
+      "altPhoneNo": "",
+      "address": "Kolar bag, Mumbai",
+      "identity": [
+        {
+          "no": "678678687",
+          "type": "Aadhaar",
+          "ref": "secure url to fetch the image"
+        },
+        {
+          "no": "AMTPK5656",
+          "type": "PAN Card",
+          "ref": "secure link to PAN card"
+        }
+      ]
+    }
+  ],
+  "calls": [
+    {
+      "id": 1,
+      "for": "HouseMaid",
+      "purpose": "Need help and support for the family",
+      "amount": 10000,
+      "currency": "USD",
+      "targetDate": "2020-03-10",
+      "receiverId": 1,
+      "lastModified": "2020-03-30T11:10:10.500Z"
+    },
+    {
+      "id": 2,
+      "for": "NGO",
+      "purpose": "Need help for an active NGO supporing kids less than 5 years",
+      "amount": 30000,
+      "currency": "INR",
+      "targetDate": "2020-03-10",
+      "receiverId": 2,
+      "lastModified": "2020-03-30T11:10:10.500Z"
+    }
+  ],
+  "documents": [
+    {
+      "id": null,
+      "title": "Kanta bai - Profile photo",
+      "type": "Image/Audio/Video",
+      "url": "s3 url of the pic",
+      "size": {
+        "value": 100,
+        "unit": "KB"
+      },
+      "lastModified": "2020-03-30T11:10:10.500Z",
+      "status": "Uploaded"
+    }
+  ],
+  "feedbacks": [
+    {
+      "callId": 1,
+      "receiverId": 1,
+      "type": "Text/Audio/Video",
+      "docId": "",
+      "remark": "",
+      "status": "Approved",
+      "lastModified": "2020-03-30T11:10:10.500Z"
+    }
+  ]
+}
