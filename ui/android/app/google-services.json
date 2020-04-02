@@ -1,0 +1,48 @@
+{
+  "project_info": {
+    "project_number": "363814251128",
+    "firebase_url": "https://copay-9d0a7.firebaseio.com",
+    "project_id": "copay-9d0a7",
+    "storage_bucket": "copay-9d0a7.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:363814251128:android:fa7147410b4e09163c5b8d",
+        "android_client_info": {
+          "package_name": "com.copay.portal"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "363814251128-joednefcelgghh8dfic14uc84jkcm2ek.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.copay.portal",
+            "certificate_hash": "734bc1f4001293a71fc7c628289e4f9e1bded731"
+          }
+        },
+        {
+          "client_id": "363814251128-5b9eor4lut4n4k11dmf3crn0ni7uiokm.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyD5d6mlcOqrCnr5LkbuYoWswJ_qQC76pqs"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "363814251128-5b9eor4lut4n4k11dmf3crn0ni7uiokm.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
