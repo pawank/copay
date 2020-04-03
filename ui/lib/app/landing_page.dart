@@ -89,7 +89,32 @@ class LandingPage extends StatelessWidget {
     if (user.displayName != null) {
       name = user.displayName;
     }
-      
+    final List<Transaction> txns = [
+                          Transaction(
+                            receiver: 'Pawan Kumar',
+                            amount: '5000.00',
+                            currency: '\$',
+                            date: '4 April 2020',
+                            info: 'Housemaid',
+                            txnType: TransactionType.sent,
+                          ),
+                          Transaction(
+                            receiver: 'Nitish Jain',
+                            amount: '15000.00',
+                            currency: '',
+                            date: '3 April 2020',
+                            info: 'Gatekeeper',
+                            txnType: TransactionType.received,
+                          ),
+                          Transaction(
+                            receiver: 'Alok Jain',
+                            amount: '25000.00',
+                            currency: '\$',
+                            date: '30 March 2020',
+                            info: 'Others',
+                            txnType: TransactionType.pending,
+                          ),
+    ];
     return SafeArea(
       child: Scaffold(
         body: Column(
@@ -191,29 +216,7 @@ class LandingPage extends StatelessWidget {
                     ),
                     Expanded(
                       child: ListView(
-                        children: <Widget>[
-                          Transaction(
-                            receptient: 'Amazigh Halzoun',
-                            transactionAmout: '5000.00',
-                            transactionDate: '26 Jun 2019',
-                            transactionInfo: 'Laptop',
-                            transactionType: TransactionType.sent,
-                          ),
-                          Transaction(
-                            receptient: 'Awesome Client',
-                            transactionAmout: '15000.00',
-                            transactionDate: '26 Jun 2019',
-                            transactionInfo: 'Mobile App',
-                            transactionType: TransactionType.received,
-                          ),
-                          Transaction(
-                            receptient: 'Lazy Client',
-                            transactionAmout: '25000.00',
-                            transactionDate: '24 Jun 2019',
-                            transactionInfo: 'Mobile App',
-                            transactionType: TransactionType.pending,
-                          ),
-                        ],
+                        children: txns,
                       ),
                     ),
                   ],
@@ -422,22 +425,23 @@ class CustomButton extends StatelessWidget {
 }
 
 class Transaction extends StatelessWidget {
-  final TransactionType transactionType;
-  final String transactionAmout, transactionInfo, transactionDate, receptient;
+  final TransactionType txnType;
+  final String amount, currency, info, date, receiver;
   const Transaction(
       {Key key,
-      this.transactionType,
-      this.transactionAmout,
-      this.transactionInfo,
-      this.transactionDate,
-      this.receptient})
+      this.txnType,
+      this.amount,
+      this.currency,
+      this.info,
+      this.date,
+      this.receiver})
       : super(key: key);
   @override
   Widget build(BuildContext context) {
     String transactionName;
     IconData transactionIconData;
     Color color;
-    switch (transactionType) {
+    switch (txnType) {
       case TransactionType.sent:
         transactionName = 'Sent';
         transactionIconData = Icons.arrow_upward;
@@ -476,7 +480,7 @@ class Transaction extends StatelessWidget {
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15.0),
                   child: Image.network(
-                    'https://cdn.pixabay.com/photo/2015/01/08/18/29/entrepreneur-593358_960_720.jpg',
+                    'https://ombagoes.com/wp-content/uploads/2019/10/flutter.jpg',
                   ),
                 ),
                 Positioned(
@@ -510,11 +514,11 @@ class Transaction extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Text(
-                      receptient,
+                      receiver,
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '\$ $transactionAmout',
+                      '\$ $amount',
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -523,7 +527,7 @@ class Transaction extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Text(
-                      '$transactionInfo - $transactionDate',
+                      '$info - $date',
                       style: TextStyle(color: Colors.grey[700]),
                     ),
                     Text(
