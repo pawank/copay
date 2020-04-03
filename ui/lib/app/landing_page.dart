@@ -1,6 +1,8 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:copay/app/home_page.dart';
+import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
+import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -61,7 +63,8 @@ class LandingPage extends StatelessWidget {
           onTap: () {
                 final route = MaterialPageRoute<void>(
                   builder: (context) {
-                    return HomePage();
+                    //final EnhancedProfileRepo profileRepo = Provider.of<EnhancedProfileRepo>(context);
+                    return UserProfile(user: user);
                   },
                 );
              Navigator.of(context).push(route);

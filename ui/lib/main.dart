@@ -4,8 +4,10 @@ import 'package:copay/app/auth_widget.dart';
 import 'package:copay/services/apple_sign_in_available.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:copay/services/auth_service_adapter.dart';
+import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/firebase_email_link_handler.dart';
 import 'package:copay/services/email_secure_store.dart';
+import 'package:copay/services/locator.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -13,6 +15,7 @@ import 'package:provider/provider.dart';
 Future<void> main() async {
   // Fix for: Unhandled Exception: ServicesBinding.defaultBinaryMessenger was accessed before the binding was initialized.
   WidgetsFlutterBinding.ensureInitialized();
+  setupLocator();
   final appleSignInAvailable = await AppleSignInAvailable.check();
   runApp(MyApp(appleSignInAvailable: appleSignInAvailable));
 }
@@ -49,6 +52,9 @@ class MyApp extends StatelessWidget {
             userCredentialsStorage: storage,
           ),
           dispose: (_, linkHandler) => linkHandler.dispose(),
+        ),
+        ChangeNotifierProvider(create: (_) => 
+            locator<EnhancedProfileRepo>()
         ),
       ],
       child: AuthWidgetBuilder(

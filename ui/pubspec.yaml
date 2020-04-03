@@ -18,7 +18,7 @@ environment:
 
 dependencies:
   random_string: ^2.0.0
-  firebase_auth: ^0.15.3
+  firebase_auth: ^0.15.5+3
   google_sign_in: ^4.1.1
   flutter_facebook_login: ^3.0.0
   apple_sign_in: ^0.1.0
@@ -28,6 +28,16 @@ dependencies:
   flutter_secure_storage: ^3.3.1+1
   package_info: ^0.4.0+13
   circular_profile_avatar: ^1.0.6
+  cloud_firestore: 0.13.4+2
+  community_material_icon: ^3.5.95
+  intl: ^0.16.0
+  get_it: ^1.0.3+2
+  wc_flutter_share: 0.1.1
+  flutter_masked_text: ^0.8.0
+  url_launcher: 5.1.2
+  responsive_scaffold: ^0.0.2
+  shared_preferences: 0.5.3+4
+  fluttertoast: ^4.0.0
   flutter:
     sdk: flutter
 
