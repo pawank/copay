@@ -38,9 +38,9 @@ class LandingPage extends StatelessWidget {
   Widget _buildUserInfo(BuildContext context, User user) {
     String name = null;
     if ((user.email != null) && (user.displayName == null)) {
-      name = user.email.toUpperCase().substring(0,1);
+      name = user.email.toUpperCase().substring(0,2);
     } else if (user.displayName != null) {
-      name = user.displayName;
+      name = user.displayName.toUpperCase().substring(0,2);
     }
     String url = '';
     if (user.photoUrl != null) {
@@ -87,7 +87,7 @@ class LandingPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final user = Provider.of<User>(context);
+    final user = Provider.of<User>(context, listen: false);
     String name = user.email;
     if (user.displayName != null) {
       name = user.displayName;

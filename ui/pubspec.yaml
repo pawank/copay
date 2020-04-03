@@ -29,6 +29,7 @@ dependencies:
   package_info: ^0.4.0+13
   circular_profile_avatar: ^1.0.6
   cloud_firestore: 0.13.4+2
+  firebase_storage: ^3.1.5
   community_material_icon: ^3.5.95
   intl: ^0.16.0
   get_it: ^1.0.3+2
@@ -38,6 +39,8 @@ dependencies:
   responsive_scaffold: ^0.0.2
   shared_preferences: 0.5.3+4
   fluttertoast: ^4.0.0
+  image_picker: 0.6.4
+  font_awesome_flutter: ^8.2.0
   flutter:
     sdk: flutter
 

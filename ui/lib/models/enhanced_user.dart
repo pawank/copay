@@ -11,6 +11,7 @@ class EnhancedProfile {
   String identityType;
   String identityNo;
   DateTime dob;
+  String profileUrl;
   bool newsletter;
   String subscribeEmail;
 
@@ -24,6 +25,7 @@ class EnhancedProfile {
       @required this.identityType,
       @required this.identityNo,
       this.dob,
+      this.profileUrl,
       this.newsletter,
       this.subscribeEmail});
 
@@ -39,6 +41,7 @@ class EnhancedProfile {
         dob = snapshot['dob'] != null
             ? (snapshot['dob'] as Timestamp).toDate()
             : null,
+        profileUrl = snapshot['profileUrl'] ?? '',
         newsletter = snapshot['newsletter'] ?? false,
         subscribeEmail = snapshot['subscribeEmail'] ?? '';
 
@@ -53,6 +56,7 @@ class EnhancedProfile {
       'identityType': identityType,
       'identityNo': identityNo,
       'dob': Timestamp.now(),
+      'profileUrl': profileUrl,
       'newsletter': newsletter,
       'subscribeEmail': subscribeEmail
     };
