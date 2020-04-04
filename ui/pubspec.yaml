@@ -41,6 +41,9 @@ dependencies:
   fluttertoast: ^4.0.0
   image_picker: 0.6.4
   font_awesome_flutter: ^8.2.0
+  file_picker: 1.5.1
+  currency_pickers: 1.0.6
+  #flutter_form_builder: 3.8.2
   flutter:
     sdk: flutter
 

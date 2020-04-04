@@ -1,15 +1,23 @@
+import 'dart:ffi';
 import 'dart:io';
 
 import 'package:copay/common_widgets/avatar.dart';
 import 'package:copay/constants/keys.dart';
 import 'package:copay/models/enhanced_user.dart';
+import 'package:copay/models/request_call.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
+import 'package:copay/services/request_call_impl.dart';
+import 'package:currency_pickers/country.dart';
+import 'package:currency_pickers/currency_picker_dropdown.dart';
+import 'package:currency_pickers/utils/utils.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_masked_text/flutter_masked_text.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:intl/intl.dart';
 import '../util.dart';
 import 'package:community_material_icon/community_material_icon.dart';
 import 'dart:async';
@@ -23,27 +31,44 @@ import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
 
-class UserProfile extends StatefulWidget {
-  UserProfile({@required this.user});
+class RaiseRequest extends StatefulWidget {
+  RaiseRequest({@required this.user});
   final User user;
   @override
-  _UserProfileState createState() => _UserProfileState(user);
+  _RaiseRequestState createState() => _RaiseRequestState(user);
 }
 
-class _UserProfileState extends State<UserProfile> {
-  _UserProfileState(this.user);
+class _RaiseRequestState extends State<RaiseRequest> {
+  _RaiseRequestState(this.user);
   final User user;
-  EnhancedProfileRepo profileRepo;
+  RequestCallRepo profileRepo;
   var index = 0;
   String email;
-  EnhancedProfile _enhancedProfile;
-  TextEditingController _phoneNoController = TextEditingController(text: '');
-  TextEditingController _addressController = TextEditingController(text: '');
+  bool individual = true;
+  double amount = 0.00;
+  String currency = '';
+  RequestCall _requestCall;
+  TextEditingController _titleController = TextEditingController(text: '');
   TextEditingController _fullnameController = TextEditingController(text: '');
+  TextEditingController _phoneNoController = TextEditingController(text: '');
   TextEditingController _emailController = TextEditingController(text: '');
+  TextEditingController _addressController = TextEditingController(text: '');
+  TextEditingController _identityNoController = TextEditingController(text: '');
+  //TextEditingController _amountController = TextEditingController(text: '');
+  MoneyMaskedTextController _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
+  TextEditingController _summaryController = TextEditingController(text: '');
   File _image;
   String _profileUrl;
 
+String getLocalCurrency(BuildContext context) {
+    Locale locale = Localizations.localeOf(context);
+    final format = NumberFormat.simpleCurrency(locale: locale.toString());
+    //print('CURRENCY SYMBOL ${format.currencySymbol}'); // $
+    //print('CURRENCY NAME ${format.currencyName}'); // USD
+    //final curr = '${format.currencyName}${format.currencySymbol} ';
+    const String curr = 'INR ';
+    return curr;
+}
   @override
   void initState() {
     super.initState();
@@ -64,7 +89,7 @@ class _UserProfileState extends State<UserProfile> {
               document = doc;
               print('Doc state updated: $document');
             });
-          }
+    }
         });
       });*/
   }
@@ -82,7 +107,7 @@ class _UserProfileState extends State<UserProfile> {
             return '';
   }
 
-  Future<String> loadImageFromFirebase(EnhancedProfile u) async {
+  Future<String> loadImageFromFirebase(RequestCall u) async {
             if ((u.profileUrl != null) && (u.profileUrl.isNotEmpty)) {
               //_profileUrl = u.profileUrl;
              //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
@@ -104,9 +129,12 @@ class _UserProfileState extends State<UserProfile> {
 
   @override
   void didChangeDependencies() {
-    profileRepo = Provider.of<EnhancedProfileRepo>(context, listen: false);
+    profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
+    setState(() {
+      _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', leftSymbol: getLocalCurrency(context));
+    });
     if (profileRepo != null) {
-      profileRepo.fetchEnhancedProfilesByUsername(email).then((users) {
+      profileRepo.fetchRequestCallsByUsername(email).then((users) {
         if ((users != null) && (users.isEmpty)) {
            if ((user != null) && (user.displayName != null)) {
               _fullnameController.text = user.displayName;
@@ -114,10 +142,11 @@ class _UserProfileState extends State<UserProfile> {
            if ((user != null) && (user.email != null)) {
               _emailController.text = user.email;
             }
+            _requestCall = RequestCall(userId: '', email: '', name: '', mobile: '', infoType: '', identityType: '', identityNo: '', txnRef: '', address: null);
         }
         users.forEach((u) {
           setState(() {
-            _enhancedProfile = u;
+            _requestCall = u;
             //_emailController.text = u.email;
             loadImageFromFirebase(u);
             _fullnameController.text = u.name;
@@ -150,6 +179,7 @@ class _UserProfileState extends State<UserProfile> {
            if ((user != null) && (user.email != null)) {
               _emailController.text = user.email;
             }
+            _requestCall = RequestCall(userId: '', email: '', name: '', mobile: '', infoType: '', identityType: '', identityNo: '', txnRef: '', address: null);
     }
     super.didChangeDependencies();
   }
@@ -228,10 +258,21 @@ class _UserProfileState extends State<UserProfile> {
       });
     }
 
+Widget _buildDropdownItem(Country country) => Container(
+        child: Row(
+          children: <Widget>[
+            CurrencyPickerUtils.getDefaultFlagImage(country),
+            SizedBox(
+              width: 8.0,
+            ),
+            Text("+${country.currencyCode}(${country.isoCode})"),
+          ],
+        ),
+      );
 
   @override
   Widget build(BuildContext context) {
-    final EnhancedProfileRepo profileRepo = Provider.of<EnhancedProfileRepo>(context, listen: false);
+    final RequestCallRepo profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
     String nameOfPerson = 'Hello, Guest';
     String fullname = '';
     String phoneno = '';
@@ -240,12 +281,12 @@ class _UserProfileState extends State<UserProfile> {
       nameOfPerson = 'Hello, ${user.displayName}';
       fullname = user.displayName;
     }
-    if (_enhancedProfile != null) {
-      phoneno = _enhancedProfile.mobile;
+    if (_requestCall != null) {
+      phoneno = _requestCall.mobile;
       if (phoneno == null) {
         phoneno = '';
       }
-      address = _enhancedProfile.address;
+      address = _requestCall.address;
       if (address == null) {
         address = '';
       }
@@ -256,14 +297,22 @@ class _UserProfileState extends State<UserProfile> {
     }
     String socialUrl = null;
     bool isShowAvatar = (user != null) && ((user.photoUrl != null) || (_profileUrl != null)); 
+    
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Container(
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            backgroundColor: Colors.transparent,
+            title: Text('Raise A Request', style: TextStyle(fontSize: 20, color: Colors.white),),
+            backgroundColor: Colors.blue,
             elevation: 0,
+            leading: new IconButton(
+    icon: new Icon(Icons.arrow_back, color: Colors.white,),
+    onPressed: () {
+                              Navigator.of(context).pop();
+    },
+  ),
             actions: <Widget>[
               IconButton(
                 key: Key(Keys.logout),
@@ -281,94 +330,115 @@ class _UserProfileState extends State<UserProfile> {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 SizedBox(height: 5),
-                if (isShowAvatar)
-                  (_image == null) ? 
-                  Avatar(
-                    photoUrl: _profileUrl != null ? _profileUrl : user.photoUrl,
-                    radius: 50,
-                    borderColor: Colors.amberAccent,
-                    borderWidth: 2.0,
-                  ):CircleAvatar(
-                      radius: 50,
-                      backgroundColor: Colors.amberAccent,
-                      child: ClipOval(
-                        child: new SizedBox(
-                          width: 90.0,
-                          height: 90.0,
-                          child: Image.file(
-                            _image,
-                            fit: BoxFit.fill,
-                          ), 
-                        ),
-                      ),
-                    ),
                   Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                 Text(
-                  nameOfPerson,
+                  'Initiate Your Help',
                   style: TextStyle(
                       fontFamily: 'worksans',
                       fontSize: 20,
                       fontWeight: FontWeight.w500,
                       color: Colors.black),
                 ),
-                  Padding(
-                    padding: EdgeInsets.only(left: 5.0),
-                    child: IconButton(
-                      icon: Icon(
-                        FontAwesomeIcons.camera,
-                        size: 20.0,
-                      ),
-                      onPressed: () {
-                        getImage();
-                      },
-                    ),
-                  ),
                 ]),
-                SizedBox(height: 10),
-                if (socialUrl != null)
-                  SizedBox(
-                    height: 25,
-                    child: FlatButton(
-                      color: CustomColors.LightGrey,
-                      textColor: CustomColors.DarkBlue,
-                      child: Text(
-                        socialUrl,
-                        style: TextStyle(
-                            fontFamily: 'worksans',
-                            color: CustomColors.DarkBlue,
-                            fontSize: 14),
-                      ),
-                      onPressed: () {
-                        /*
-                        Navigator.of(context).push(
-                          MaterialPageRoute<Null>(
-                            builder: (BuildContext context) {
-                              return Profile();
-                            },
-                            fullscreenDialog: true,
-                          ),
-                        );
-                        */
-                        print('Saving profile..');
-                      },
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(30.0),
-                      ),
-                    ),
-                  ),
                 SizedBox(height: 10),
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 20),
                   child: Column(
                     children: <Widget>[
                       TextFormField(
+                        controller: _titleController,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.next,
+                        maxLength: 300,
+                        maxLengthEnforced: true,
+                        decoration: InputDecoration(
+                          labelText: 'Call Reason',
+                          labelStyle: TextStyle(color: Colors.black),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: 
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(fullname),
+                               
+                          ),
+                        ),
+                        validator: (value) {
+      if (value.isEmpty) {
+          return 'Please provide reason (max 200 words)';
+      }
+    },
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
+                      ),
+                      SizedBox(height: 10),
+                      CurrencyPickerDropdown(
+            initialValue: 'in',
+            itemBuilder: _buildDropdownItem,
+            onValuePicked: (Country country) {
+              //print(country.currencyCode);
+              //print(country.currencyName);
+              //print(country.iso3Code);
+              //print("${country.name}");
+              final String curr = '${country.currencyCode} ';
+    setState(() {
+      _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', leftSymbol: curr);
+    });
+            },
+          ),
+                      TextFormField(
+                        controller: _amountController,
+                        keyboardType: TextInputType.numberWithOptions(signed:false, decimal: true),
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Amount',
+                          labelStyle: TextStyle(color: Colors.black),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: 
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(fullname),
+                               
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
+                      ),
+                      SizedBox(height: 10),
+                      SwitchListTile(
+  title: const Text('Individual or Company'),
+  value: _requestCall != null && _requestCall.individual != null ? _requestCall.individual : true,
+  onChanged: (bool val) =>
+      setState(() => _requestCall.individual = val)
+),
+                      SizedBox(height: 10),
+                      TextFormField(
                         controller: _fullnameController,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Full Name',
+                          labelText: 'Person / Company',
                           labelStyle: TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -393,12 +463,13 @@ class _UserProfileState extends State<UserProfile> {
                       ),
                       SizedBox(height: 10),
                       TextFormField(
-                        readOnly: true,
-                        enabled: false,
+                        //readOnly: true,
+                        //enabled: false,
                         controller: _emailController,
                         keyboardType: TextInputType.emailAddress,
+                        textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'E-mail Address',
+                          labelText: 'Primary Email Address',
                           labelStyle: TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -425,7 +496,7 @@ class _UserProfileState extends State<UserProfile> {
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Phone Number',
+                          labelText: 'Contact Number',
                           labelStyle: TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -453,7 +524,7 @@ class _UserProfileState extends State<UserProfile> {
                         textInputAction: TextInputAction.next,
                         maxLines: null,
                         decoration: InputDecoration(
-                          labelText: 'Address',
+                          labelText: 'Valid Full Address',
                           labelStyle: TextStyle(color: Colors.black),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -474,6 +545,64 @@ class _UserProfileState extends State<UserProfile> {
                             fontSize: 18),
                         //initialValue: address,
                       ),
+                      SizedBox(height: 10),
+                      DropdownButton<String>(
+                        hint: Text('Identity Document Type'),
+    value: _requestCall != null && _requestCall.identityType != null ? _requestCall.identityType : 'Aadhaar No',
+    icon: Icon(Icons.arrow_downward),
+    iconSize: 24,
+    elevation: 16,
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+    underline: Container(
+      height: 2,
+      color: Colors.black54,
+    ),
+    onChanged: (String newValue) {
+      setState(() {
+        _requestCall.identityType = newValue;
+      });
+    },
+    items: <String>['Aadhaar No', 'PAN Card', 'Voter ID', 'Passport No', 'Social Security No', '']
+      .map<DropdownMenuItem<String>>((String value) {
+        return DropdownMenuItem<String>(
+          value: value,
+          child: Text(value),
+        );
+      })
+      .toList(),
+  ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _identityNoController,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Identity No',
+                          labelStyle: TextStyle(color: Colors.black),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: 
+                          Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(fullname),
+                               
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
+                      ),
                     ],
                   ),
                 ),
@@ -484,7 +613,7 @@ class _UserProfileState extends State<UserProfile> {
                     color: CustomColors.LightGrey,
                     textColor: CustomColors.DarkBlue,
                     child: Text(
-                      'Save',
+                      'Save Request',
                       style: TextStyle(
                           fontFamily: 'worksans',
                           color: CustomColors.DarkBlue,
@@ -502,25 +631,34 @@ class _UserProfileState extends State<UserProfile> {
                       });
                       */
                       final yesno = await PlatformAlertDialog(
-                        title: 'Update Profile',
-                        content: 'Do you really want to update?',
+                        title: 'Send Request',
+                        content: 'Please allow us to validate the request for you',
                         cancelActionText: Strings.cancel,
-                        defaultActionText: 'Yes',
+                        defaultActionText: 'Validate and Save',
                       ).show(context);
                       if (yesno == true) {
-                        EnhancedProfile data = EnhancedProfile(
+                        RequestCall data = RequestCall(
                             userId: user.uid,
                             email: user.email,
+                            purpose: _titleController.text,
+                            name: _fullnameController.text,
                             mobile: _phoneNoController.text,
                             address: _addressController.text,
+                            identityType: '',
+                            identityNo: _identityNoController.text,
+                            individual: individual ? individual : _requestCall.individual,
+                            amount:  _amountController.numberValue,
+                            currency: _amountController.leftSymbol,
                             profileUrl: getImageFilename(_image), 
                             );
-                        final bool status =
-                            await profileRepo.saveEnhancedProfile(data);
+                        final String validationResult = data.validate();
+                        bool status = validationResult == '';
+                        if (status) {
+                            status = await profileRepo.saveRequestCall(data);
                         if (status) {
                         print('Saved profile information');
                         Fluttertoast.showToast(
-        msg: 'Profile has been updated for ${user.email}',
+        msg: 'Request has been successfully submitted',
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -530,7 +668,7 @@ class _UserProfileState extends State<UserProfile> {
     );
                         } else {
                         Fluttertoast.showToast(
-        msg: 'Profile cannot be updated for ${user.email}',
+        msg: 'Request Call cannot be saved',
         toastLength: Toast.LENGTH_LONG,
         gravity: ToastGravity.BOTTOM,
         timeInSecForIosWeb: 1,
@@ -539,6 +677,18 @@ class _UserProfileState extends State<UserProfile> {
         fontSize: 16.0
     );
 
+                        }
+                        } else {
+
+                        Fluttertoast.showToast(
+        msg: validationResult,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.red,
+        textColor: Colors.white,
+        fontSize: 16.0
+    );
                         }
                       }
                     },

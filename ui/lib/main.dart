@@ -8,6 +8,7 @@ import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/firebase_email_link_handler.dart';
 import 'package:copay/services/email_secure_store.dart';
 import 'package:copay/services/locator.dart';
+import 'package:copay/services/request_call_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
@@ -55,6 +56,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => 
             locator<EnhancedProfileRepo>()
+        ),
+        ChangeNotifierProvider(create: (_) => 
+            locator<RequestCallRepo>()
         ),
       ],
       child: AuthWidgetBuilder(

@@ -1,5 +1,6 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:copay/app/home_page.dart';
+import 'package:copay/screens/raise_a_request.dart';
 import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
@@ -184,14 +185,14 @@ class LandingPage extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                       children: <Widget>[
                         Flexible(
-                          child: CustomButton(buttonType: ButtonType.payBills),
+                          child: CustomButton(buttonType: ButtonType.payBills, user: user),
                         ),
                         Flexible(
-                          child: CustomButton(buttonType: ButtonType.donate),
+                          child: CustomButton(buttonType: ButtonType.donate, user: user),
                         ),
                         Flexible(
                           child:
-                              CustomButton(buttonType: ButtonType.receiptients),
+                              CustomButton(buttonType: ButtonType.receiptients, user: user),
                         ),
                         /*
                         Flexible(
@@ -362,13 +363,14 @@ class SendReceiveSwitch extends StatelessWidget {
 
 class CustomButton extends StatelessWidget {
   final ButtonType buttonType;
-  const CustomButton({Key key, this.buttonType}) : super(key: key);
+  final User user;
+  const CustomButton({Key key, this.buttonType, this.user}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     String buttonText = '', buttonImage;
     switch (buttonType) {
       case ButtonType.payBills:
-        buttonText = 'Help by Pay';
+        buttonText = 'Raise Request';
         buttonImage = 'assets/receipt.png';
         break;
       case ButtonType.donate:
@@ -387,7 +389,19 @@ class CustomButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
-        onTap: () {},
+        onTap: () {
+          print('Clicked: ${buttonText}');
+          if (buttonText == 'Raise Request') {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (context) {
+                    return RaiseRequest(user: user);
+                  },
+                ),
+              );
+          }
+        },
         child: Container(
           padding: EdgeInsets.all(15.0),
           child: Column(
