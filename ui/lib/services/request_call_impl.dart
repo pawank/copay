@@ -18,11 +18,11 @@ class RequestCallRepo extends ChangeNotifier {
     return _profiles;
   }
 
-  Future<List<RequestCall>> fetchRequestCallsByUsername(
-      String username) async {
+  Future<List<RequestCall>> fetchRequestCallsByCode(
+      String code) async {
     var result = await _api.getDataCollection();
     _profiles = result.documents
-        .where((doc) => doc.data['email'] == username)
+        .where((doc) => code != null && doc.data['code'] == code && code.isNotEmpty)
         .map((doc) => RequestCall.fromMap(doc.data, doc.documentID))
         .toList();
     return _profiles;
@@ -66,7 +66,7 @@ class RequestCallRepo extends ChangeNotifier {
 
   Future<bool> saveRequestCall(RequestCall data) async {
     final List<RequestCall> users =
-        await fetchRequestCallsByEmail(data.email);
+        await fetchRequestCallsByCode(data.code);
     if (users.isEmpty) {
       return _api.addDocument(data.toJson()).then((v) => v.documentID != null);
     } else {

@@ -5,6 +5,7 @@ import 'package:copay/common_widgets/avatar.dart';
 import 'package:copay/constants/keys.dart';
 import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/models/request_call.dart';
+import 'package:copay/screens/request_calls.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
 import 'package:currency_pickers/country.dart';
@@ -18,6 +19,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:uuid/uuid.dart';
 import '../util.dart';
 import 'package:community_material_icon/community_material_icon.dart';
 import 'dart:async';
@@ -32,15 +34,17 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 
 class RaiseRequest extends StatefulWidget {
-  RaiseRequest({@required this.user});
+  RaiseRequest({@required this.user, @required this.code});
   final User user;
+  final String code;
   @override
-  _RaiseRequestState createState() => _RaiseRequestState(user);
+  _RaiseRequestState createState() => _RaiseRequestState(user, code);
 }
 
 class _RaiseRequestState extends State<RaiseRequest> {
-  _RaiseRequestState(this.user);
+  _RaiseRequestState(this.user, this.code);
   final User user;
+  final String code;
   RequestCallRepo profileRepo;
   var index = 0;
   String email;
@@ -55,12 +59,15 @@ class _RaiseRequestState extends State<RaiseRequest> {
   TextEditingController _addressController = TextEditingController(text: '');
   TextEditingController _identityNoController = TextEditingController(text: '');
   //TextEditingController _amountController = TextEditingController(text: '');
-  MoneyMaskedTextController _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
+  MoneyMaskedTextController _amountController = new MoneyMaskedTextController(
+      decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
   TextEditingController _summaryController = TextEditingController(text: '');
   File _image;
   String _profileUrl;
+  DialogState _dialogState = DialogState.DISMISSED;
+  final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
 
-String getLocalCurrency(BuildContext context) {
+  String getLocalCurrency(BuildContext context) {
     Locale locale = Localizations.localeOf(context);
     final format = NumberFormat.simpleCurrency(locale: locale.toString());
     //print('CURRENCY SYMBOL ${format.currencySymbol}'); // $
@@ -68,7 +75,8 @@ String getLocalCurrency(BuildContext context) {
     //final curr = '${format.currencyName}${format.currencySymbol} ';
     const String curr = 'INR ';
     return curr;
-}
+  }
+
   @override
   void initState() {
     super.initState();
@@ -93,93 +101,92 @@ String getLocalCurrency(BuildContext context) {
         });
       });*/
   }
+
   String getFullname() {
-           if ((user != null) && (user.displayName != null)) {
-             return user.displayName;
-            }
-            return '';
+    if ((user != null) && (user.displayName != null)) {
+      return user.displayName;
+    }
+    return '';
   }
 
   String getEmail() {
-           if ((user != null) && (user.email != null)) {
-             return user.email;
-            }
-            return '';
+    if ((user != null) && (user.email != null)) {
+      return user.email;
+    }
+    return '';
   }
 
   Future<String> loadImageFromFirebase(RequestCall u) async {
-            if ((u.profileUrl != null) && (u.profileUrl.isNotEmpty)) {
-              //_profileUrl = u.profileUrl;
-             //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
-             final String bucket = 'gs://copay-9d0a7.appspot.com/' + u.profileUrl;
-             print(bucket);
-       Future<StorageReference> firebaseStorageRefF = FirebaseStorage.instance.getReferenceFromUrl(bucket);
-       firebaseStorageRefF.then((firebaseStorageRef) async {
-         final dynamic url = await firebaseStorageRef.getDownloadURL();
-            if (url != null) {
-               setState(() {
-                 _profileUrl = url;
-               });
-               return _profileUrl;
-            }
-       });
-            }
-            Future.value(null);
+    if ((u.profileUrl != null) && (u.profileUrl.isNotEmpty)) {
+      //_profileUrl = u.profileUrl;
+      //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
+      final String bucket = 'gs://copay-9d0a7.appspot.com/' + u.profileUrl;
+      print(bucket);
+      Future<StorageReference> firebaseStorageRefF =
+          FirebaseStorage.instance.getReferenceFromUrl(bucket);
+      firebaseStorageRefF.then((firebaseStorageRef) async {
+        final dynamic url = await firebaseStorageRef.getDownloadURL();
+        if (url != null) {
+          setState(() {
+            _profileUrl = url;
+          });
+          return _profileUrl;
+        }
+      });
+    }
+    Future.value(null);
   }
 
   @override
   void didChangeDependencies() {
     profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
     setState(() {
-      _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', leftSymbol: getLocalCurrency(context));
+      _amountController = new MoneyMaskedTextController(
+          decimalSeparator: '.',
+          thousandSeparator: ',',
+          leftSymbol: getLocalCurrency(context));
     });
     if (profileRepo != null) {
-      profileRepo.fetchRequestCallsByUsername(email).then((users) {
+      profileRepo.fetchRequestCallsByCode(code).then((users) {
         if ((users != null) && (users.isEmpty)) {
-           if ((user != null) && (user.displayName != null)) {
-              _fullnameController.text = user.displayName;
-            }
-           if ((user != null) && (user.email != null)) {
-              _emailController.text = user.email;
-            }
-            _requestCall = RequestCall(userId: '', email: '', name: '', mobile: '', infoType: '', identityType: '', identityNo: '', txnRef: '', address: null);
+          _requestCall = RequestCall(
+              userId: '',
+              email: '',
+              name: '',
+              mobile: '',
+              infoType: '',
+              identityType: '',
+              identityNo: '',
+              txnRef: '',
+              address: null,
+              status: 'Pending');
         }
         users.forEach((u) {
           setState(() {
             _requestCall = u;
             //_emailController.text = u.email;
             loadImageFromFirebase(u);
-            _fullnameController.text = u.name;
-            if ((u.name == null) || (u.name.isEmpty)) {
-              _fullnameController.text = '';
-            }
-           if ((user != null) && (user.displayName != null)) {
-             if (_fullnameController.text.isEmpty) {
-              _fullnameController.text = user.displayName;
-             }
-            }
-            _phoneNoController.text = u.mobile;
-            if (u.mobile == null) {
-              _phoneNoController.text = '';
-            }
-            _addressController.text = u.address;
-            if (u.address == null) {
-              _addressController.text = '';
-            }
-            if (u.email != null) {
-              _emailController.text = u.email;
-            }
           });
         });
       });
     } else {
-           if ((user != null) && (user.displayName != null)) {
-              _fullnameController.text = user.displayName;
-            }
-           if ((user != null) && (user.email != null)) {
-              _emailController.text = user.email;
-            }
-            _requestCall = RequestCall(userId: '', email: '', name: '', mobile: '', infoType: '', identityType: '', identityNo: '', txnRef: '', address: null);
+      if ((user != null) && (user.displayName != null)) {
+        _fullnameController.text = user.displayName;
+      }
+      if ((user != null) && (user.email != null)) {
+        _emailController.text = user.email;
+      }
+      _requestCall = RequestCall(
+          userId: '',
+          email: '',
+          name: '',
+          mobile: '',
+          infoType: '',
+          identityType: '',
+          identityNo: '',
+          txnRef: '',
+          address: null,
+          status: 'Pending');
     }
     super.didChangeDependencies();
   }
@@ -210,10 +217,9 @@ String getLocalCurrency(BuildContext context) {
     }
   }
 
-
   Widget getIconType(String value) {
     if ((value == null) || (value.isEmpty)) {
-        return Icon(Icons.minimize, color: Colors.black);
+      return Icon(Icons.minimize, color: Colors.black);
     }
     return Icon(Icons.check, color: Colors.black);
   }
@@ -224,41 +230,41 @@ String getLocalCurrency(BuildContext context) {
       String fullfileName = user.email != null ? user.email : 'files';
       fullfileName = fullfileName + '/' + fileName;
       return fullfileName;
-    } 
+    }
     return null;
   }
 
-  Future uploadPic() async{
-      String fileName = getImageFilename(_image);
-       StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child(fileName);
-       StorageUploadTask uploadTask = firebaseStorageRef.putFile(_image);
-       StorageTaskSnapshot taskSnapshot=await uploadTask.onComplete;
-       setState(() {
-          print('Profile Picture uploaded');
-          //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
-          Fluttertoast.showToast(
-        msg: 'Profile picture uploaded',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-       });
-    }
+  Future uploadPic() async {
+    String fileName = getImageFilename(_image);
+    StorageReference firebaseStorageRef =
+        FirebaseStorage.instance.ref().child(fileName);
+    StorageUploadTask uploadTask = firebaseStorageRef.putFile(_image);
+    StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
+    setState(() {
+      print('Profile Picture uploaded');
+      //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
+      Fluttertoast.showToast(
+          msg: 'Profile picture uploaded',
+          toastLength: Toast.LENGTH_LONG,
+          gravity: ToastGravity.BOTTOM,
+          timeInSecForIosWeb: 1,
+          backgroundColor: Colors.black54,
+          textColor: Colors.white,
+          fontSize: 16.0);
+    });
+  }
 
   Future getImage() async {
-      var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
 
-      setState(() {
-        _image = image;
-          print('Image Path $_image');
-          uploadPic();
-      });
-    }
+    setState(() {
+      _image = image;
+      print('Image Path $_image');
+      uploadPic();
+    });
+  }
 
-Widget _buildDropdownItem(Country country) => Container(
+  Widget _buildDropdownItem(Country country) => Container(
         child: Row(
           children: <Widget>[
             CurrencyPickerUtils.getDefaultFlagImage(country),
@@ -272,56 +278,40 @@ Widget _buildDropdownItem(Country country) => Container(
 
   @override
   Widget build(BuildContext context) {
-    final RequestCallRepo profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
-    String nameOfPerson = 'Hello, Guest';
-    String fullname = '';
-    String phoneno = '';
-    String address = '';
-    if ((user != null) && (user.displayName != null)) {
-      nameOfPerson = 'Hello, ${user.displayName}';
-      fullname = user.displayName;
-    }
-    if (_requestCall != null) {
-      phoneno = _requestCall.mobile;
-      if (phoneno == null) {
-        phoneno = '';
-      }
-      address = _requestCall.address;
-      if (address == null) {
-        address = '';
-      }
-    }
-    String email = null;
-    if ((user != null) && (user.email != null)) {
-      email = user.email;
-    }
-    String socialUrl = null;
-    bool isShowAvatar = (user != null) && ((user.photoUrl != null) || (_profileUrl != null)); 
-    
+    final RequestCallRepo profileRepo =
+        Provider.of<RequestCallRepo>(context, listen: false);
+    bool isShowAvatar =
+        (user != null) && ((user.photoUrl != null) || (_profileUrl != null));
+
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Container(
         child: Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
-            title: Text('Raise A Request', style: TextStyle(fontSize: 20, color: Colors.white),),
+            title: Text(
+              'Raise A Request',
+              style: TextStyle(fontSize: 20, color: Colors.white),
+            ),
             backgroundColor: Colors.blue,
             elevation: 0,
             leading: new IconButton(
-    icon: new Icon(Icons.arrow_back, color: Colors.white,),
-    onPressed: () {
-                              Navigator.of(context).pop();
-    },
-  ),
+              icon: new Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
             actions: <Widget>[
               IconButton(
-                key: Key(Keys.logout),
-                icon: Icon(CommunityMaterialIcons.logout_variant),
-                color: Colors.black54,
-                onPressed: () async {
-                  await _confirmSignOut(context);
-                }
-              ),
+                  key: Key(Keys.logout),
+                  icon: Icon(CommunityMaterialIcons.logout_variant),
+                  color: Colors.black54,
+                  onPressed: () async {
+                    await _confirmSignOut(context);
+                  }),
             ],
           ),
           body: SingleChildScrollView(
@@ -330,18 +320,18 @@ Widget _buildDropdownItem(Country country) => Container(
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
                 SizedBox(height: 5),
-                  Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                Text(
-                  'Initiate Your Help',
-                  style: TextStyle(
-                      fontFamily: 'worksans',
-                      fontSize: 20,
-                      fontWeight: FontWeight.w500,
-                      color: Colors.black),
-                ),
-                ]),
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      Text(
+                        'Initiate Your Help',
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            fontSize: 20,
+                            fontWeight: FontWeight.w500,
+                            color: Colors.black),
+                      ),
+                    ]),
                 SizedBox(height: 10),
                 Container(
                   margin: EdgeInsets.symmetric(horizontal: 20),
@@ -353,29 +343,29 @@ Widget _buildDropdownItem(Country country) => Container(
                         textInputAction: TextInputAction.next,
                         maxLength: 300,
                         maxLengthEnforced: true,
+                        maxLines: null,
                         decoration: InputDecoration(
                           labelText: 'Call Reason',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _titleController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
                           ),
                           // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
-                          suffixIcon: 
-                          Padding(
+                          suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child: getIconType(fullname),
-                               
+                            child: getIconType(_titleController.text),
                           ),
                         ),
                         validator: (value) {
-      if (value.isEmpty) {
-          return 'Please provide reason (max 200 words)';
-      }
-    },
+                          if (value.isEmpty) {
+                            return 'Please provide reason (max 200 words)';
+                          }
+                        },
                         style: TextStyle(
                             fontFamily: 'worksans',
                             color: Colors.black,
@@ -384,39 +374,42 @@ Widget _buildDropdownItem(Country country) => Container(
                       ),
                       SizedBox(height: 10),
                       CurrencyPickerDropdown(
-            initialValue: 'in',
-            itemBuilder: _buildDropdownItem,
-            onValuePicked: (Country country) {
-              //print(country.currencyCode);
-              //print(country.currencyName);
-              //print(country.iso3Code);
-              //print("${country.name}");
-              final String curr = '${country.currencyCode} ';
-    setState(() {
-      _amountController = new MoneyMaskedTextController(decimalSeparator: '.', thousandSeparator: ',', leftSymbol: curr);
-    });
-            },
-          ),
+                        initialValue: 'in',
+                        itemBuilder: _buildDropdownItem,
+                        onValuePicked: (Country country) {
+                          //print(country.currencyCode);
+                          //print(country.currencyName);
+                          //print(country.iso3Code);
+                          //print("${country.name}");
+                          final String curr = '${country.currencyCode} ';
+                          setState(() {
+                            _amountController = new MoneyMaskedTextController(
+                                decimalSeparator: '.',
+                                thousandSeparator: ',',
+                                leftSymbol: curr);
+                          });
+                        },
+                      ),
                       TextFormField(
                         controller: _amountController,
-                        keyboardType: TextInputType.numberWithOptions(signed:false, decimal: true),
+                        keyboardType: TextInputType.numberWithOptions(
+                            signed: false, decimal: true),
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Amount',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
                           ),
                           focusedBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _amountController.text != '' && _amountController.text != '0.00' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
-                          suffixIcon: 
-                          Padding(
+                          suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child: getIconType(fullname),
-                               
+                            child: getIconType(_amountController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -427,11 +420,13 @@ Widget _buildDropdownItem(Country country) => Container(
                       ),
                       SizedBox(height: 10),
                       SwitchListTile(
-  title: const Text('Individual or Company'),
-  value: _requestCall != null && _requestCall.individual != null ? _requestCall.individual : true,
-  onChanged: (bool val) =>
-      setState(() => _requestCall.individual = val)
-),
+                          title: const Text('Individual or Company'),
+                          value: _requestCall != null &&
+                                  _requestCall.individual != null
+                              ? _requestCall.individual
+                              : true,
+                          onChanged: (bool val) =>
+                              setState(() => _requestCall.individual = val)),
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _fullnameController,
@@ -440,19 +435,18 @@ Widget _buildDropdownItem(Country country) => Container(
                         decoration: InputDecoration(
                           labelText: 'Person / Company',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _fullnameController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
                           ),
                           // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
-                          suffixIcon: 
-                          Padding(
+                          suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child: getIconType(fullname),
-                               
+                            child: getIconType(_fullnameController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -471,8 +465,9 @@ Widget _buildDropdownItem(Country country) => Container(
                         decoration: InputDecoration(
                           labelText: 'Primary Email Address',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _emailController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -481,7 +476,7 @@ Widget _buildDropdownItem(Country country) => Container(
                           suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child:getIconType(email),
+                            child: getIconType(_emailController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -498,8 +493,9 @@ Widget _buildDropdownItem(Country country) => Container(
                         decoration: InputDecoration(
                           labelText: 'Contact Number',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _phoneNoController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -508,7 +504,7 @@ Widget _buildDropdownItem(Country country) => Container(
                           suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child:getIconType(phoneno),
+                            child: getIconType(_phoneNoController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -526,8 +522,9 @@ Widget _buildDropdownItem(Country country) => Container(
                         decoration: InputDecoration(
                           labelText: 'Valid Full Address',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _addressController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -536,7 +533,7 @@ Widget _buildDropdownItem(Country country) => Container(
                           suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child: getIconType(address),
+                            child: getIconType(_addressController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -548,32 +545,40 @@ Widget _buildDropdownItem(Country country) => Container(
                       SizedBox(height: 10),
                       DropdownButton<String>(
                         hint: Text('Identity Document Type'),
-    value: _requestCall != null && _requestCall.identityType != null ? _requestCall.identityType : 'Aadhaar No',
-    icon: Icon(Icons.arrow_downward),
-    iconSize: 24,
-    elevation: 16,
+                        value: _requestCall != null &&
+                                _requestCall.identityType != null
+                            ? _requestCall.identityType
+                            : 'Aadhaar No',
+                        icon: Icon(Icons.arrow_downward),
+                        iconSize: 24,
+                        elevation: 16,
                         style: TextStyle(
                             fontFamily: 'worksans',
                             color: Colors.black,
                             fontSize: 18),
-    underline: Container(
-      height: 2,
-      color: Colors.black54,
-    ),
-    onChanged: (String newValue) {
-      setState(() {
-        _requestCall.identityType = newValue;
-      });
-    },
-    items: <String>['Aadhaar No', 'PAN Card', 'Voter ID', 'Passport No', 'Social Security No', '']
-      .map<DropdownMenuItem<String>>((String value) {
-        return DropdownMenuItem<String>(
-          value: value,
-          child: Text(value),
-        );
-      })
-      .toList(),
-  ),
+                        underline: Container(
+                          height: 2,
+                          color: Colors.black54,
+                        ),
+                        onChanged: (String newValue) {
+                          setState(() {
+                            _requestCall.identityType = newValue;
+                          });
+                        },
+                        items: <String>[
+                          'Aadhaar No',
+                          'PAN Card',
+                          'Voter ID',
+                          'Passport No',
+                          'Social Security No',
+                          ''
+                        ].map<DropdownMenuItem<String>>((String value) {
+                          return DropdownMenuItem<String>(
+                            value: value,
+                            child: Text(value),
+                          );
+                        }).toList(),
+                      ),
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _identityNoController,
@@ -582,19 +587,18 @@ Widget _buildDropdownItem(Country country) => Container(
                         decoration: InputDecoration(
                           labelText: 'Identity No',
                           labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: BorderSide(color: Colors.black),
+                            borderSide: _identityNoController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
                           ),
                           // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
-                          suffixIcon: 
-                          Padding(
+                          suffixIcon: Padding(
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
-                            child: getIconType(fullname),
-                               
+                            child: getIconType(_identityNoController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -630,72 +634,92 @@ Widget _buildDropdownItem(Country country) => Container(
                         val.updateProfile(updateUser);
                       });
                       */
+                        //_formKey.currentState.save();
+                        setState(() => _dialogState = DialogState.LOADING);
+                        var uuid = Uuid();
+                        RequestCall data = RequestCall(
+                          userId: user.uid,
+                          code: code != null && code.isNotEmpty
+                              ? code
+                              : uuid
+                                  .v4()
+                                  .split('-')
+                                  .reversed
+                                  .first
+                                  .toUpperCase(),
+                          email: user.email,
+                          purpose: _titleController.text,
+                          name: _fullnameController.text,
+                          mobile: _phoneNoController.text,
+                          address: _addressController.text,
+                          identityType: '',
+                          identityNo: _identityNoController.text,
+                          individual:
+                              individual ? individual : _requestCall.individual,
+                          amount: _amountController.numberValue,
+                          currency: _amountController.leftSymbol,
+                          profileUrl: getImageFilename(_image),
+                        );
+                        final String validationResult = data.validate();
+                        bool status = validationResult == '';
+                        if (status) {
                       final yesno = await PlatformAlertDialog(
                         title: 'Send Request',
-                        content: 'Please allow us to validate the request for you',
+                        content:
+                            'Please allow us to validate the request for you',
                         cancelActionText: Strings.cancel,
                         defaultActionText: 'Validate and Save',
                       ).show(context);
                       if (yesno == true) {
-                        RequestCall data = RequestCall(
-                            userId: user.uid,
-                            email: user.email,
-                            purpose: _titleController.text,
-                            name: _fullnameController.text,
-                            mobile: _phoneNoController.text,
-                            address: _addressController.text,
-                            identityType: '',
-                            identityNo: _identityNoController.text,
-                            individual: individual ? individual : _requestCall.individual,
-                            amount:  _amountController.numberValue,
-                            currency: _amountController.leftSymbol,
-                            profileUrl: getImageFilename(_image), 
-                            );
-                        final String validationResult = data.validate();
-                        bool status = validationResult == '';
-                        if (status) {
-                            status = await profileRepo.saveRequestCall(data);
-                        if (status) {
-                        print('Saved profile information');
-                        Fluttertoast.showToast(
-        msg: 'Request has been successfully submitted',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.black54,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-                        } else {
-                        Fluttertoast.showToast(
-        msg: 'Request Call cannot be saved',
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-
-                        }
-                        } else {
-
-                        Fluttertoast.showToast(
-        msg: validationResult,
-        toastLength: Toast.LENGTH_LONG,
-        gravity: ToastGravity.BOTTOM,
-        timeInSecForIosWeb: 1,
-        backgroundColor: Colors.red,
-        textColor: Colors.white,
-        fontSize: 16.0
-    );
-                        }
+                          status = await profileRepo.saveRequestCall(data);
+                          if (status) {
+                            print('Saved profile information');
+                            Fluttertoast.showToast(
+                                msg: 'Request has been successfully submitted',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black54,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+                final route = MaterialPageRoute<void>(
+                  builder: (context) {
+                    //final EnhancedProfileRepo profileRepo = Provider.of<EnhancedProfileRepo>(context);
+                    return RequestCallScreen(user: user, code: '');
+                  },
+                );
+             Navigator.of(context).push(route);
+                          } else {
+                            Fluttertoast.showToast(
+                                msg: 'Request Call cannot be saved',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+                          }
                       }
+                        } else {
+                          Fluttertoast.showToast(
+                              msg: validationResult,
+                              toastLength: Toast.LENGTH_LONG,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.red,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
+                        }
+                        setState(() => _dialogState = DialogState.COMPLETED);
+                        setState(() => _dialogState = DialogState.DISMISSED);
                     },
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
                   ),
+                ),
+                MyDialog(
+                  state: _dialogState,
                 ),
               ],
             ),
@@ -703,5 +727,53 @@ Widget _buildDropdownItem(Country country) => Container(
         ),
       ),
     );
+  }
+}
+
+enum DialogState {
+  LOADING,
+  COMPLETED,
+  DISMISSED,
+}
+
+class MyDialog extends StatelessWidget {
+  final DialogState state;
+  MyDialog({this.state});
+
+  @override
+  Widget build(BuildContext context) {
+    return state == DialogState.DISMISSED
+        ? Container()
+        : AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.all(
+                Radius.circular(10.0),
+              ),
+            ),
+            content: Container(
+              width: 250.0,
+              height: 100.0,
+              child: state == DialogState.LOADING
+                  ? Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        CircularProgressIndicator(),
+                        Padding(
+                          padding: const EdgeInsets.only(left: 10.0),
+                          child: Text(
+                            "Exporting...",
+                            style: TextStyle(
+                              fontFamily: "OpenSans",
+                              color: Color(0xFF5B6978),
+                            ),
+                          ),
+                        )
+                      ],
+                    )
+                  : Center(
+                      child: Text('Data loaded with success'),
+                    ),
+            ),
+          );
   }
 }

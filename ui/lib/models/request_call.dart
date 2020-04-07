@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 
 class RequestCall {
   String userId;
+  String code;
   String purpose;
   String name;
   String email;
@@ -11,17 +12,20 @@ class RequestCall {
   String address;
   String identityType;
   String identityNo;
-  DateTime createdOn;
+  Timestamp createdOn;
   String profileUrl;
   bool individual;
   double amount;
   String currency;
   String txnRef;
+  String txnType;
   String status;
-  DateTime updatedOn;
+  Timestamp updatedOn;
 
   RequestCall(
-      {@required this.userId,
+      {
+        @required this.userId,
+        @required this.code,
       this.email,
       @required this.purpose,
       @required this.name,
@@ -30,17 +34,19 @@ class RequestCall {
       @required this.address,
       @required this.identityType,
       @required this.identityNo,
-      this.createdOn,
+      @required this.createdOn,
       this.profileUrl,
       this.individual,
       @required this.amount,
       @required this.currency,
       this.txnRef,
+      this.txnType,
       @required this.status,
       this.updatedOn});
 
   RequestCall.fromMap(Map snapshot, String id)
       : userId = id ?? '',
+        code = snapshot['code'] ?? '',
         email = snapshot['email'] ?? '',
         purpose = snapshot['purpose'] ?? '',
         name = snapshot['name'] ?? '',
@@ -50,21 +56,23 @@ class RequestCall {
         identityType = snapshot['identityType'] ?? '',
         identityNo = snapshot['identityNo'] ?? '',
         createdOn = snapshot['createdOn'] != null
-            ? (snapshot['createdOn'] as Timestamp).toDate()
+            ? (snapshot['createdOn'] as Timestamp)
             : null,
         profileUrl = snapshot['profileUrl'] ?? '',
         individual = snapshot['individual'] ?? false,
         amount = snapshot['amount'] ?? 0.00,
         currency = snapshot['currency'] ?? '',
         txnRef = snapshot['txnRef'] ?? '',
+        txnType = snapshot['txnType'] ?? '',
         status = snapshot['status'] ?? '',
         updatedOn = snapshot['updatedOn'] != null
-            ? (snapshot['updatedOn'] as Timestamp).toDate()
+            ? (snapshot['updatedOn'] as Timestamp)
             : null;
 
   dynamic toJson() {
     return {
       'userId': userId,
+      'code': code,
       'email': email,
       'purpose': purpose,
       'name': name,
@@ -79,6 +87,7 @@ class RequestCall {
       'amount': amount,
       'currency': currency,
       'txnRef': txnRef,
+      'txnType': txnType,
       'status': status,
       'updatedOn': updatedOn
     };
@@ -87,22 +96,22 @@ class RequestCall {
   String validate() {
     var status = '';
     if (purpose == '') {
-      status = status + ', Please provide purpose.';
+      status = status + 'Please provide purpose.';
     }
     if (name == '') {
-      status = status + ', You must provide full name.';
+      status = status + 'You must provide full name.';
     }
     if (mobile == '') {
-      status = status + ', Please provide primary mobile number.';
+      status = status + 'Please provide primary mobile number.';
     }
     if (amount <= 0) {
-      status = status + ', Amount must be more than 0.00.';
+      status = status + 'Amount must be more than 0.00.';
     }
     if (currency == '') {
-      status = status + ', You must select the currency value.';
+      status = status + 'You must select the currency value.';
     }
     if (identityNo == '') {
-      status = status + ', You must provide a valid identity ID.';
+      status = status + 'You must provide a valid identity ID.';
     }
     return status;
   }

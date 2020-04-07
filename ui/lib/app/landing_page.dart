@@ -1,14 +1,13 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
-import 'package:copay/app/home_page.dart';
 import 'package:copay/screens/raise_a_request.dart';
+import 'package:copay/screens/request_calls.dart';
+import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
-import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 enum ButtonType { payBills, donate, receiptients, offers }
-enum TransactionType { sent, received, pending }
 /*
 void main() => runApp(MyApp());
 
@@ -93,30 +92,30 @@ class LandingPage extends StatelessWidget {
     if (user.displayName != null) {
       name = user.displayName;
     }
-    final List<Transaction> txns = [
-                          Transaction(
+    final List<RequestSummary> txns = [
+                          RequestSummary(
                             receiver: 'Pawan Kumar',
                             amount: '5000.00',
                             currency: '\$',
                             date: '4 April 2020',
                             info: 'Housemaid',
-                            txnType: TransactionType.sent,
+                            txnType: RequestSummaryType.sent,
                           ),
-                          Transaction(
+                          RequestSummary(
                             receiver: 'Nitish Jain',
                             amount: '15000.00',
                             currency: '',
                             date: '3 April 2020',
                             info: 'Gatekeeper',
-                            txnType: TransactionType.received,
+                            txnType: RequestSummaryType.received,
                           ),
-                          Transaction(
+                          RequestSummary(
                             receiver: 'Alok Jain',
                             amount: '25000.00',
                             currency: '\$',
                             date: '30 March 2020',
                             info: 'Others',
-                            txnType: TransactionType.pending,
+                            txnType: RequestSummaryType.pending,
                           ),
     ];
     return SafeArea(
@@ -378,7 +377,7 @@ class CustomButton extends StatelessWidget {
         buttonImage = 'assets/donation.png';
         break;
       case ButtonType.receiptients:
-        buttonText = 'People';
+        buttonText = 'Friends';
         buttonImage = 'assets/users.png';
         break;
       case ButtonType.offers:
@@ -397,6 +396,16 @@ class CustomButton extends StatelessWidget {
                 MaterialPageRoute<void>(
                   builder: (context) {
                     return RaiseRequest(user: user);
+                  },
+                ),
+              );
+          }
+          if (buttonText == 'Donate') {
+              Navigator.push(
+                context,
+                MaterialPageRoute<void>(
+                  builder: (context) {
+                    return RequestCallScreen(user: user, code: '',);
                   },
                 ),
               );
@@ -436,130 +445,6 @@ class CustomButton extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class Transaction extends StatelessWidget {
-  final TransactionType txnType;
-  final String amount, currency, info, date, receiver;
-  const Transaction(
-      {Key key,
-      this.txnType,
-      this.amount,
-      this.currency,
-      this.info,
-      this.date,
-      this.receiver})
-      : super(key: key);
-  @override
-  Widget build(BuildContext context) {
-    String transactionName;
-    IconData transactionIconData;
-    Color color;
-    switch (txnType) {
-      case TransactionType.sent:
-        transactionName = 'Sent';
-        transactionIconData = Icons.arrow_upward;
-        color = Theme.of(context).primaryColor;
-        break;
-      case TransactionType.received:
-        transactionName = 'Received';
-        transactionIconData = Icons.arrow_downward;
-        color = Colors.green;
-        break;
-      case TransactionType.pending:
-        transactionName = 'Pending';
-        transactionIconData = Icons.arrow_downward;
-        color = Colors.orange;
-        break;
-    }
-    return Container(
-      margin: EdgeInsets.fromLTRB(0, 9, 0, 9),
-      padding: EdgeInsets.all(9.0),
-      decoration: BoxDecoration(
-        color: Colors.white,
-        boxShadow: [
-          BoxShadow(
-            blurRadius: 5.0,
-            color: Colors.grey[350],
-            offset: Offset(0, 3),
-          ),
-        ],
-      ),
-      child: Row(
-        children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: Stack(
-              children: <Widget>[
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(15.0),
-                  child: Image.network(
-                    'https://ombagoes.com/wp-content/uploads/2019/10/flutter.jpg',
-                  ),
-                ),
-                Positioned(
-                  bottom: 0,
-                  right: 0,
-                  child: Container(
-                    width: 15.0,
-                    height: 15.0,
-                    decoration: BoxDecoration(
-                      color: color,
-                      shape: BoxShape.circle,
-                    ),
-                    child: FittedBox(
-                      child: Icon(
-                        transactionIconData,
-                        color: Colors.white,
-                      ),
-                    ),
-                  ),
-                )
-              ],
-            ),
-          ),
-          SizedBox(width: 5.0),
-          Flexible(
-            flex: 4,
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.stretch,
-              children: <Widget>[
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      receiver,
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '\$ $amount',
-                      style: TextStyle(fontWeight: FontWeight.bold),
-                    ),
-                  ],
-                ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: <Widget>[
-                    Text(
-                      '$info - $date',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    Text(
-                      '$transactionName',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: color,
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
       ),
     );
   }
