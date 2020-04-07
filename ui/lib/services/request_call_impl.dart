@@ -41,6 +41,15 @@ class RequestCallRepo extends ChangeNotifier {
     await _api.removeDocument(id);
     return;
   }
+  Future<void> removeRequestByCode(
+      String code) async {
+    var result = await _api.getDataCollection();
+    result.documents
+        .where((doc) => code != null && doc.data['code'] == code && code.isNotEmpty)
+        .forEach((doc) {
+          removeRequestCall(doc.documentID);
+        });
+  }
 
   Future updateRequestCall(RequestCall data, String id) async {
     await _api.updateDocument(data.toJson(), id);

@@ -94,8 +94,11 @@ class RequestSummary extends StatelessWidget {
           Flexible(
             flex: 4,
             child: 
-            new GestureDetector(
-              
+            new InkWell(
+             key: key, 
+             highlightColor: Colors.blueAccent,
+             hoverColor: Colors.blue,
+             splashColor: Colors.deepOrange,
         onTap: (){
             print('On tap called');
             Navigator.push(
@@ -109,9 +112,14 @@ class RequestSummary extends StatelessWidget {
         },
         onDoubleTap: () {
             print('On double tap called');
-        },
-        onLongPress: () {
-
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return RaiseRequest(user: user, code: code);
+                },
+              ),
+            );
         },
         child:
             Column(

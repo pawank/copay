@@ -229,18 +229,30 @@ class _RaiseRequestState extends State<RaiseRequest> {
     }
   }
 
-  Future<void> _confirmSignOut(BuildContext context) async {
-    print('Doing logout for user');
+  Future<void> _deleteRequest(BuildContext context, RequestCall request) async {
+    print('Doing deletion');
     final bool didRequestSignOut = await PlatformAlertDialog(
-      title: Strings.logout,
-      content: Strings.logoutAreYouSure,
+      title: 'Delete the Raised Request',
+      content: 'The request will no longer be available for anyone to view',
       cancelActionText: Strings.cancel,
-      defaultActionText: Strings.logout,
+      defaultActionText: 'Delete',
     ).show(context);
     if (didRequestSignOut == true) {
-      _signOut(context);
+    if (profileRepo != null) {
+      profileRepo.removeRequestByCode(request.code).then((value){
+                            Fluttertoast.showToast(
+                                msg: 'Request has been successfully deleted',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.black54,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+      });
+    }
     }
   }
+
 
   Widget getIconType(String value) {
     if ((value == null) || (value.isEmpty)) {
@@ -334,14 +346,14 @@ class _RaiseRequestState extends State<RaiseRequest> {
               },
             ),
             actions: <Widget>[
-              /*
+              ((_requestCall != null) && (_requestCall.email != null) && (_requestCall.email == user.email)) ?
               IconButton(
                   key: Key(Keys.logout),
-                  icon: Icon(CommunityMaterialIcons.logout_variant),
-                  color: Colors.black54,
+                  icon: Icon(CommunityMaterialIcons.trash_can),
+                  color: Colors.redAccent,
                   onPressed: () async {
-                    await _confirmSignOut(context);
-                  }),*/
+                    await _deleteRequest(context, _requestCall);
+                  }) : Text(''),
             ],
           ),
           body: 
@@ -670,7 +682,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
                 SizedBox(height: 30),
                 SizedBox(
                   width: 200,
-                  child: _saveEnabled == false ? Text(_requestCall.status) : FlatButton(
+                  child: _saveEnabled == false ? 
+                    Center(child: Text(code != null ? code : '' + ' Saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),) 
+                  : FlatButton(
                     color: CustomColors.LightGrey,
                     textColor: CustomColors.DarkBlue,
                     
