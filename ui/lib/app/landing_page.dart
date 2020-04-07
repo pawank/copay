@@ -1,5 +1,6 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:copay/screens/contacts.dart';
 import 'package:copay/screens/raise_a_request.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
@@ -463,12 +464,25 @@ class CustomButton extends StatelessWidget {
               ),
             );
           }
-          if (buttonText == 'Donate') {
+          else if (buttonText == 'Donate') {
             Navigator.push(
               context,
               MaterialPageRoute<void>(
                 builder: (context) {
                   return RequestCallScreen(
+                    user: user,
+                    code: '',
+                  );
+                },
+              ),
+            );
+          }
+          else if (buttonText == 'Friends') {
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return ContactScreen(
                     user: user,
                     code: '',
                   );
