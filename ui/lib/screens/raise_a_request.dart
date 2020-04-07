@@ -1,11 +1,14 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/common_widgets/avatar.dart';
 import 'package:copay/constants/keys.dart';
+import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/screens/request_calls.dart';
+import 'package:copay/screens/txn.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
 import 'package:currency_pickers/country.dart';
@@ -45,12 +48,15 @@ class _RaiseRequestState extends State<RaiseRequest> {
   _RaiseRequestState(this.user, this.code);
   final User user;
   final String code;
+  bool _isLoading = true;
   RequestCallRepo profileRepo;
+  bool _saveEnabled = true;
   var index = 0;
   String email;
   bool individual = true;
   double amount = 0.00;
   String currency = '';
+  String _identityType = '';
   RequestCall _requestCall;
   TextEditingController _titleController = TextEditingController(text: '');
   TextEditingController _fullnameController = TextEditingController(text: '');
@@ -61,11 +67,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
   //TextEditingController _amountController = TextEditingController(text: '');
   MoneyMaskedTextController _amountController = new MoneyMaskedTextController(
       decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
-  TextEditingController _summaryController = TextEditingController(text: '');
   File _image;
   String _profileUrl;
   DialogState _dialogState = DialogState.DISMISSED;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
+  //Stream<QuerySnapshot> _callStream = null;
 
   String getLocalCurrency(BuildContext context) {
     Locale locale = Localizations.localeOf(context);
@@ -77,29 +83,31 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return curr;
   }
 
+  Future<void> getRequestByCodeStream(String code) {
+    final streamQS = Firestore.instance
+        .collection('request_calls')
+        .where('code', isEqualTo: code)
+        .snapshots();
+       streamQS.toList().then((xs){
+         if ((xs != null) && (xs.isNotEmpty)) {
+            List<DocumentSnapshot> snapshots = xs.first.documents;
+                if ((snapshots != null) && (snapshots.isNotEmpty)) {
+                snapshots.forEach((document){
+                    setState(() {
+                    });
+                });
+                }
+         }
+       }); 
+  }
+
   @override
   void initState() {
     super.initState();
     if (user.email != null) {
       email = user.email;
     }
-
-    /*
-      final Future<QuerySnapshot> userJobsF = Firestore.instance
-          .collection(Constants.jobsCollection)
-          .getDocuments();
-      userJobsF.then((docs) {
-        print('No of matches docs: ${docs.documents.length}');
-        docs.documents.forEach((doc) {
-          print('DOC: $doc');
-          if (doc.documentID == documentID) {
-            setState(() {
-              document = doc;
-              print('Doc state updated: $document');
-            });
-    }
-        });
-      });*/
+      //getRequestByCodeStream(code);
   }
 
   String getFullname() {
@@ -166,8 +174,24 @@ class _RaiseRequestState extends State<RaiseRequest> {
             _requestCall = u;
             //_emailController.text = u.email;
             loadImageFromFirebase(u);
+      _saveEnabled = _requestCall.txnType != null && _requestCall.txnType != 'received';
+  _titleController = TextEditingController(text: _requestCall.purpose);
+  _fullnameController = TextEditingController(text: _requestCall.name);
+  _phoneNoController = TextEditingController(text: _requestCall.mobile);
+  _emailController = TextEditingController(text: _requestCall.email);
+  _addressController = TextEditingController(text: _requestCall.address);
+  _identityNoController = TextEditingController(text: _requestCall.identityNo);
+      currency = _requestCall.currency;
+      _identityType = _requestCall.identityType;
+      individual = _requestCall.individual;
+      amount = _requestCall.amount;
+      _amountController.updateValue(amount);
+      _isLoading = false;
           });
         });
+      });
+      setState(() {
+      _isLoading = false;
       });
     } else {
       if ((user != null) && (user.displayName != null)) {
@@ -187,6 +211,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
           txnRef: '',
           address: null,
           status: 'Pending');
+      _isLoading = false;
     }
     super.didChangeDependencies();
   }
@@ -286,7 +311,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
       home: Container(
-        child: Scaffold(
+        child: 
+        new WillPopScope(
+    onWillPop: () async => true,
+    child: 
+        Scaffold(
           backgroundColor: Colors.white,
           appBar: AppBar(
             title: Text(
@@ -305,16 +334,37 @@ class _RaiseRequestState extends State<RaiseRequest> {
               },
             ),
             actions: <Widget>[
+              /*
               IconButton(
                   key: Key(Keys.logout),
                   icon: Icon(CommunityMaterialIcons.logout_variant),
                   color: Colors.black54,
                   onPressed: () async {
                     await _confirmSignOut(context);
-                  }),
+                  }),*/
             ],
           ),
-          body: SingleChildScrollView(
+          body: 
+          /*
+      StreamBuilder<QuerySnapshot>(
+          stream: _callStream,
+          builder:
+              (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+            if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+            switch (snapshot.connectionState) {
+              case ConnectionState.waiting:
+                return Text('Loading..');
+              default:
+                child:
+                RequestCall obj = null;
+                if (snapshot.hasData) {
+                final List<DocumentSnapshot> docs = snapshot.data.documents;
+                docs.forEach((document){
+                        obj = CloudStoreConvertor.toObject(document);
+                });
+          return*/ 
+          _isLoading == true ? Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),) :
+          SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
@@ -339,6 +389,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                     children: <Widget>[
                       TextFormField(
                         controller: _titleController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.multiline,
                         textInputAction: TextInputAction.next,
                         maxLength: 300,
@@ -392,6 +443,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       ),
                       TextFormField(
                         controller: _amountController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.numberWithOptions(
                             signed: false, decimal: true),
                         textInputAction: TextInputAction.next,
@@ -430,6 +482,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _fullnameController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -460,6 +513,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         //readOnly: true,
                         //enabled: false,
                         controller: _emailController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.emailAddress,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -488,6 +542,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _phoneNoController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.phone,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -516,6 +571,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _addressController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.multiline,
                         textInputAction: TextInputAction.next,
                         maxLines: null,
@@ -582,6 +638,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _identityNoController,
+                        enabled: _saveEnabled,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -613,9 +670,10 @@ class _RaiseRequestState extends State<RaiseRequest> {
                 SizedBox(height: 30),
                 SizedBox(
                   width: 200,
-                  child: FlatButton(
+                  child: _saveEnabled == false ? Text(_requestCall.status) : FlatButton(
                     color: CustomColors.LightGrey,
                     textColor: CustomColors.DarkBlue,
+                    
                     child: Text(
                       'Save Request',
                       style: TextStyle(
@@ -623,8 +681,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
                           color: CustomColors.DarkBlue,
                           fontSize: 18),
                     ),
-                    onPressed: () async {
+                    onPressed: _saveEnabled == true ? () async {
                       //await _confirmSignOut(context);
+                      setState(() {
+                        _saveEnabled = false;
+                      });
                       print('Saving profile information');
                       /*
                       FirebaseAuth.instance.currentUser().then((val) {
@@ -636,6 +697,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       */
                         //_formKey.currentState.save();
                         setState(() => _dialogState = DialogState.LOADING);
+                        String identityType = _requestCall.identityType;
                         var uuid = Uuid();
                         RequestCall data = RequestCall(
                           userId: user.uid,
@@ -652,7 +714,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
                           name: _fullnameController.text,
                           mobile: _phoneNoController.text,
                           address: _addressController.text,
-                          identityType: '',
+                          txnType: 'pending',
+                          identityType: identityType,
                           identityNo: _identityNoController.text,
                           individual:
                               individual ? individual : _requestCall.individual,
@@ -712,7 +775,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         }
                         setState(() => _dialogState = DialogState.COMPLETED);
                         setState(() => _dialogState = DialogState.DISMISSED);
-                    },
+                    } : null,
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(30.0),
                     ),
@@ -724,6 +787,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
               ],
             ),
           ),
+        ),
         ),
       ),
     );

@@ -20,6 +20,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
   _RequestCallScreenState(this.user, this.code);
   final User user;
   final String code;
+  final int maxInfoLength = 30;
   ScrollController _scrollBottomBarController = new ScrollController();
   bool isScrollingDown = false;
   bool _showAppbar = true; //this is to show app bar
@@ -83,18 +84,19 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
         title: Text('My Requests'),
         centerTitle: true,
       ),
-      body: StreamBuilder<QuerySnapshot>(
+      body: 
+      StreamBuilder<QuerySnapshot>(
           stream: streamQS,
           builder:
               (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.waiting:
-                return Text('Loading..');
+                return Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),);
               default:
                 child:
                 final List<DocumentSnapshot> docs = snapshot.data.documents;
-                print('Doc size = ${docs.length}');
+                print('Doc size for request calls = ${docs.length}');
                 final docsSize = docs.length;
                 if (docsSize <= 0) {
                   return Container(
@@ -146,7 +148,8 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                     height: _height * 0.8,
                     child: ListView(
                       controller: _scrollBottomBarController,
-                      children: docs.map((DocumentSnapshot document) {
+                      children: 
+                      docs.map((DocumentSnapshot document) {
                         final RequestCall obj = CloudStoreConvertor.toObject(document);
                         if (obj != null) {
                           var txnType = RequestSummaryType.pending; 
@@ -158,10 +161,10 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                           DateTime dt = obj.createdOn.toDate();
                           String date = new DateFormat.yMMMMd('en_US').format(dt);
                           String info = '';
-                          if (obj.purpose.length < 10) {
+                          if (obj.purpose.length < maxInfoLength) {
                             info = obj.purpose;
                           } else {
-                            info = obj.purpose.substring(0, 10) + '..';
+                            info = obj.purpose.substring(0, maxInfoLength) + '..';
                           }
                           return RequestSummary(
                             code: obj.code,
@@ -171,6 +174,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                             date: date,
                             info: info,
                             txnType: txnType,
+                            user: user,
                           );
                         } else {
                           return Text(

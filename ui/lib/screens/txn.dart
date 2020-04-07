@@ -1,5 +1,7 @@
 
 import 'package:copay/app/landing_page.dart';
+import 'package:copay/screens/raise_a_request.dart';
+import 'package:copay/services/auth_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
@@ -14,10 +16,12 @@ class RequestSummary extends StatelessWidget {
       this.currency,
       this.info,
       this.date,
-      this.receiver})
+      this.receiver,
+      this.user})
       : super(key: key);
   final RequestSummaryType txnType;
   final String code, amount, currency, info, date, receiver;
+  final User user;
   @override
   Widget build(BuildContext context) {
     String transactionName;
@@ -89,9 +93,31 @@ class RequestSummary extends StatelessWidget {
           SizedBox(width: 5.0),
           Flexible(
             flex: 4,
-            child: Column(
+            child: 
+            new GestureDetector(
+              
+        onTap: (){
+            print('On tap called');
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return RaiseRequest(user: user, code: code);
+                },
+              ),
+            );
+        },
+        onDoubleTap: () {
+            print('On double tap called');
+        },
+        onLongPress: () {
+
+        },
+        child:
+            Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: <Widget>[
+                
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
@@ -100,8 +126,18 @@ class RequestSummary extends StatelessWidget {
                       style: TextStyle(fontWeight: FontWeight.bold),
                     ),
                     Text(
-                      '\$ $amount',
+                      '$currency $amount',
                       style: TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                  ],
+                ),
+                
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: <Widget>[
+                    Text(
+                      '$info',
+                      style: TextStyle(color: Colors.grey[700]),
                     ),
                   ],
                 ),
@@ -109,11 +145,7 @@ class RequestSummary extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: <Widget>[
                     Text(
-                      '$info - $date',
-                      style: TextStyle(color: Colors.grey[700]),
-                    ),
-                    Text(
-                      '$transactionName',
+                      '$date',
                       style: TextStyle(
                         fontWeight: FontWeight.bold,
                         color: color,
@@ -122,6 +154,7 @@ class RequestSummary extends StatelessWidget {
                   ],
                 ),
               ],
+            ),
             ),
           ),
         ],
