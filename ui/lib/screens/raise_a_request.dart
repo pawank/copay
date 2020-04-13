@@ -313,7 +313,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
       mediaUrl = _requestCall.mediaUrl;
       amount = _requestCall.amount;
       _amountController.updateValue(amount);
-      _saveEnabled = true;
+      _saveEnabled = code == null || (code != null && code.isEmpty);
       _isLoading = false;
           });
         });
@@ -918,7 +918,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: _medialController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
+                            borderSide: _medialController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.orangeAccent),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -1021,9 +1021,6 @@ class _RaiseRequestState extends State<RaiseRequest> {
                     ),
                     onPressed: _saveEnabled == true ? () async {
                       //await _confirmSignOut(context);
-                      setState(() {
-                        _saveEnabled = false;
-                      });
                       print('Saving profile information');
                       /*
                       FirebaseAuth.instance.currentUser().then((val) {
@@ -1060,13 +1057,16 @@ class _RaiseRequestState extends State<RaiseRequest> {
                           amount: _amountController.numberValue,
                           currency: _amountController.leftSymbol,
                           profileUrl: getImageFilename(_image),
+                          upiId: _upiIdController.text,
                           imageUrl: callbackCameraLink != null ? getImageFilename(File(callbackCameraLink)) : _requestCall.imageUrl,
                           mediaUrl: callbackVideoLink != null ? getImageFilename(File(callbackVideoLink)) : _requestCall.mediaUrl,
+                          status: 'Requested',
 
                         );
                         final String validationResult = data.validate();
                         bool status = validationResult == '';
                         if (status) {
+                      
                       final yesno = await PlatformAlertDialog(
                         title: 'Send Request',
                         content:
@@ -1075,6 +1075,10 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         defaultActionText: 'Validate and Save',
                       ).show(context);
                       if (yesno == true) {
+                      setState(() {
+                        _saveEnabled = false;
+                      });
+                      
                         await uploadPic(callbackCameraLink, false);
                         await uploadPic(callbackVideoLink, true);
                           status = await profileRepo.saveRequestCall(data);

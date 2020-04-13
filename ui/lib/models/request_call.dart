@@ -120,9 +120,19 @@ class RequestCall extends ChangeNotifier {
     }
     if (name == '') {
       status = status + 'You must provide full name.';
+    } else if ((name != null) && (name.isNotEmpty)) {
+      final pattern = RegExp(r'^[a-zA-Z\.\s]+$');
+      if (!pattern.hasMatch(name)) {
+        status = status + 'Please verify your name.';
+      }
     }
     if (mobile == '') {
       status = status + 'Please provide primary mobile number.';
+    }else if ((mobile != null) && (mobile.isNotEmpty)) {
+      final pattern = RegExp(r'^\+?[0-9]{10,12}$');
+      if (!pattern.hasMatch(mobile)) {
+        status = status + 'Please provide a valid mobile number.';
+      }
     }
     if (amount <= 0) {
       status = status + 'Amount must be more than 0.00.';
@@ -132,6 +142,12 @@ class RequestCall extends ChangeNotifier {
     }
     if (identityNo == '') {
       //status = status + 'You must provide a valid identity ID.';
+    }
+    if (upiId != null) {
+      final pattern = RegExp(r'^[a-zA-Z0-9\.]+\@[a-zA-Z0-9\.]+$');
+      if (!pattern.hasMatch(upiId)) {
+        status = status + 'UPI ID seems to be invalid.';
+      }
     }
     return status;
   }

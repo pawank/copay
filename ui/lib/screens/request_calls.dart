@@ -3,6 +3,7 @@ import 'package:copay/app/sign_in/sign_in_page.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/services/auth_service.dart';
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:copay/screens/txn.dart';
@@ -69,6 +70,15 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
     _scrollBottomBarController.removeListener(() {});
     super.dispose();
   }
+  
+  String getFinalUrl(String path) {
+    if (path != null) {
+      //return 'https://copay-9d0a7.appspot.com/$path';
+      return path;
+    }
+    return null; 
+  }
+  
 
   @override
   Widget build(BuildContext context) {
@@ -145,7 +155,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                   );
                 } else {
                   return Container(
-                    height: _height * 0.8,
+                    //height: _height * 0.8,
                     child: ListView(
                       controller: _scrollBottomBarController,
                       children: 
@@ -174,6 +184,8 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                             date: date,
                             info: info,
                             txnType: txnType,
+                            imageUrl: getFinalUrl(obj.imageUrl),
+                            mediaUrl: getFinalUrl(obj.mediaUrl),
                             user: user,
                           );
                         } else {

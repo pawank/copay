@@ -17,11 +17,29 @@ class RequestSummary extends StatelessWidget {
       this.info,
       this.date,
       this.receiver,
+      this.imageUrl,
+      this.mediaUrl,
       this.user})
       : super(key: key);
   final RequestSummaryType txnType;
-  final String code, amount, currency, info, date, receiver;
+  final String code, amount, currency, info, date, receiver, imageUrl, mediaUrl;
   final User user;
+  
+  Widget getMediaIconType(String value) {
+    if ((value == null) || (value.isEmpty)) {
+      return Text('');
+    }
+    return Icon(Icons.videocam, color: Colors.black);
+  }
+
+
+  Widget getIconType(String value) {
+    if ((value == null) || (value.isEmpty)) {
+      return Text('');
+    }
+    return Icon(Icons.image, color: Colors.black);
+  }
+
   @override
   Widget build(BuildContext context) {
     String transactionName;
@@ -65,8 +83,11 @@ class RequestSummary extends StatelessWidget {
               children: <Widget>[
                 ClipRRect(
                   borderRadius: BorderRadius.circular(15.0),
-                  child: Image.network(
-                    'https://ombagoes.com/wp-content/uploads/2019/10/flutter.jpg',
+                  child: imageUrl != null ? Image.asset(
+                    'assets/app-logo.png'
+                  )
+                   : Image.asset(
+                    'assets/app-logo.png'
                   ),
                 ),
                 Positioned(
@@ -159,6 +180,8 @@ class RequestSummary extends StatelessWidget {
                         color: color,
                       ),
                     ),
+                    if (imageUrl != null) getIconType(imageUrl),
+                    if (mediaUrl != null) getMediaIconType(mediaUrl),
                   ],
                 ),
               ],

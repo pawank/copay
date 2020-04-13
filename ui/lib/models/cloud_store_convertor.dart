@@ -35,6 +35,11 @@ class CloudStoreConvertor {
           txnRef: getValue(doc, 'txnRef'),
           txnType: getValue(doc, 'txnType'),
           status: getValue(doc, 'status'),
+          imageUrl: getValue(doc, 'imageUrl'),
+          mediaUrl: getValue(doc, 'mediaUrl'),
+          feedback: getValue(doc, 'feedback'),
+          upiId: getValue(doc, 'upiId'),
+          website: getValue(doc, 'website'),
           updatedOn: doc['updatedOn'] != null ? doc['updatedOn'] as Timestamp : Timestamp.now()
           );
     
