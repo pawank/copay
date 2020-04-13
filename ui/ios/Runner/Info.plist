@@ -64,5 +64,18 @@
 	</array>
 	<key>UIViewControllerBasedStatusBarAppearance</key>
 	<false/>
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>Can the app use photo library for uploading selected images for requests feedback?</string>
+    <key>NSCameraUsageDescription</key>
+    <string>Can I use the camera for allowing you to take feedback pics and short feedback clips, please?</string>
+    <key>NSMicrophoneUsageDescription</key>
+    <string>Can I use the mic for video clips for feedback, please?</string>
+    <key>NSAppTransportSecurity</key>
+    <dict>
+          <key>NSAllowsArbitraryLoads</key>
+            <true/>
+        </dict>
+        <key>NSContactsUsageDescription</key>  
+        <string>App requires contacts access to function properly. It is required for sharing requests with your friends.</string>
 </dict>
 </plist>

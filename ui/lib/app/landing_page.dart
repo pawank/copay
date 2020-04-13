@@ -174,7 +174,7 @@ class LandingPage extends StatelessWidget {
                                             CrossAxisAlignment.start,
                                         children: <Widget>[
                                           Text(
-                                            'Hello ${name},',
+                                            'Hello $name,',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .title,

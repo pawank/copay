@@ -1,3 +1,4 @@
+import 'package:camera/camera.dart';
 import 'package:copay/app/auth_widget_builder.dart';
 import 'package:copay/app/email_link_error_presenter.dart';
 import 'package:copay/app/auth_widget.dart';
@@ -13,9 +14,36 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:provider/provider.dart';
 
+List<CameraDescription> cameras = [];
+
+class DataKeys extends StatefulWidget {
+  DataKeys({this.photoLink, this.videoLink});
+  String photoLink;
+  String videoLink;
+  @override
+  _DataKeysState createState() =>
+  _DataKeysState(this.photoLink, this.videoLink);
+
+  }
+  
+  class _DataKeysState extends State<DataKeys> {
+    _DataKeysState(this.photoLink, this.videoLink);
+  String photoLink;
+  String videoLink;
+
+  @override
+  Widget build(BuildContext context) {
+    // TODO: implement build
+    return null;
+  }
+}
+
+final GlobalKey<_DataKeysState> dataKeys = GlobalKey<_DataKeysState>();
+
 Future<void> main() async {
   // Fix for: Unhandled Exception: ServicesBinding.defaultBinaryMessenger was accessed before the binding was initialized.
   WidgetsFlutterBinding.ensureInitialized();
+  cameras = await availableCameras();
   setupLocator();
   final appleSignInAvailable = await AppleSignInAvailable.check();
   runApp(MyApp(appleSignInAvailable: appleSignInAvailable));

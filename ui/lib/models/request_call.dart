@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
-class RequestCall {
+class RequestCall extends ChangeNotifier {
   String userId;
   String code;
   String purpose;
@@ -15,11 +15,16 @@ class RequestCall {
   Timestamp createdOn;
   String profileUrl;
   bool individual;
+  String website;
+  String upiId;
   double amount;
   String currency;
   String txnRef;
   String txnType;
   String status;
+  String feedback;
+  String imageUrl;
+  String mediaUrl;
   Timestamp updatedOn;
 
   RequestCall(
@@ -32,16 +37,21 @@ class RequestCall {
       @required this.mobile,
       @required this.infoType,
       @required this.address,
-      @required this.identityType,
-      @required this.identityNo,
+      this.identityType,
+      this.identityNo,
       @required this.createdOn,
       this.profileUrl,
       this.individual,
+      this.website,
+      this.upiId,
       @required this.amount,
       @required this.currency,
       this.txnRef,
       this.txnType,
       @required this.status,
+      this.feedback,
+      this.imageUrl,
+      this.mediaUrl,
       this.updatedOn});
 
   RequestCall.fromMap(Map snapshot, String id)
@@ -60,11 +70,16 @@ class RequestCall {
             : null,
         profileUrl = snapshot['profileUrl'] ?? '',
         individual = snapshot['individual'] ?? false,
+        website = snapshot['website'] ?? '',
+        upiId = snapshot['upiId'] ?? '',
         amount = snapshot['amount'] ?? 0.00,
         currency = snapshot['currency'] ?? '',
         txnRef = snapshot['txnRef'] ?? '',
         txnType = snapshot['txnType'] ?? '',
         status = snapshot['status'] ?? '',
+        feedback = snapshot['feedback'] ?? '',
+        imageUrl = snapshot['imageUrl'] ?? '',
+        mediaUrl = snapshot['mediaUrl'] ?? '',
         updatedOn = snapshot['updatedOn'] != null
             ? (snapshot['updatedOn'] as Timestamp)
             : null;
@@ -84,11 +99,16 @@ class RequestCall {
       'createdOn': Timestamp.now(),
       'profileUrl': profileUrl,
       'individual': individual,
+      'website': website,
+      'upiId': upiId,
       'amount': amount,
       'currency': currency,
       'txnRef': txnRef,
       'txnType': txnType,
       'status': status,
+      'feedback': feedback,
+      'imageUrl': imageUrl,
+      'mediaUrl': mediaUrl,
       'updatedOn': updatedOn
     };
   }
@@ -111,8 +131,16 @@ class RequestCall {
       status = status + 'You must select the currency value.';
     }
     if (identityNo == '') {
-      status = status + 'You must provide a valid identity ID.';
+      //status = status + 'You must provide a valid identity ID.';
     }
     return status;
+  }
+
+  void onChange() {
+  notifyListeners();
+}
+
+  static RequestCall empty() {
+    return new RequestCall(userId: null, code: null, purpose: null, name: '', mobile: null, infoType: null, address: null, createdOn: null, amount: null, currency: null, status: null);
   }
 }

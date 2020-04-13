@@ -1,12 +1,16 @@
 import 'dart:ffi';
 import 'dart:io';
 
+import 'package:camera/camera.dart';
+import 'package:chewie/chewie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/common_widgets/avatar.dart';
+import 'package:copay/common_widgets/video_player_app.dart';
 import 'package:copay/constants/keys.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/models/request_call.dart';
+import 'package:copay/screens/camera_app.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
@@ -22,7 +26,9 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
+import 'package:video_player/video_player.dart';
 import '../util.dart';
 import 'package:community_material_icon/community_material_icon.dart';
 import 'dart:async';
@@ -37,17 +43,21 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 
 class RaiseRequest extends StatefulWidget {
-  RaiseRequest({@required this.user, @required this.code});
+  RaiseRequest({@required this.user, @required this.code, this.callbackCamera, this.callbackVideo});
   final User user;
   final String code;
+  final String callbackCamera;
+  final String callbackVideo;
   @override
-  _RaiseRequestState createState() => _RaiseRequestState(user, code);
+  _RaiseRequestState createState() => _RaiseRequestState(user, code,callbackCamera,callbackVideo);
 }
 
 class _RaiseRequestState extends State<RaiseRequest> {
-  _RaiseRequestState(this.user, this.code);
+  _RaiseRequestState(this.user, this.code, this.callbackCamera, this.callbackVideo);
   final User user;
   final String code;
+  final String callbackCamera;
+  final String callbackVideo;
   bool _isLoading = true;
   RequestCallRepo profileRepo;
   bool _saveEnabled = true;
@@ -57,6 +67,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
   double amount = 0.00;
   String currency = '';
   String _identityType = '';
+  String upiId = '';
+  String imageUrl = null;
+  String mediaUrl = null;
   RequestCall _requestCall;
   TextEditingController _titleController = TextEditingController(text: '');
   TextEditingController _fullnameController = TextEditingController(text: '');
@@ -64,14 +77,39 @@ class _RaiseRequestState extends State<RaiseRequest> {
   TextEditingController _emailController = TextEditingController(text: '');
   TextEditingController _addressController = TextEditingController(text: '');
   TextEditingController _identityNoController = TextEditingController(text: '');
+  TextEditingController _gstinController = TextEditingController(text: '');
+  TextEditingController _upiIdController = TextEditingController(text: '');
+  TextEditingController _medialController = TextEditingController(text: '');
   //TextEditingController _amountController = TextEditingController(text: '');
   MoneyMaskedTextController _amountController = new MoneyMaskedTextController(
       decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
   File _image;
   String _profileUrl;
+  String _imageUrl;
+  String _mediaUrl;
   DialogState _dialogState = DialogState.DISMISSED;
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   //Stream<QuerySnapshot> _callStream = null;
+  //Function _callbackCameraF;
+  //Function _callbackVideoF;
+  String callbackCameraLink;
+  String callbackVideoLink;
+  
+  //image / video
+  Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    if (imageOrVideo != null) {
+      String key = 'camera_image_path';
+      if (imageOrVideo == 'video') {
+        key = 'video_image_path';
+      }
+      if (prefs.containsKey(key)) {
+        return Future.value(prefs.getString(key));
+      }
+    }
+    return Future.value(null);
+  }
+
 
   String getLocalCurrency(BuildContext context) {
     Locale locale = Localizations.localeOf(context);
@@ -104,11 +142,39 @@ class _RaiseRequestState extends State<RaiseRequest> {
   @override
   void initState() {
     super.initState();
-    if (user.email != null) {
+    if ((user != null) && (user.email != null)) {
       email = user.email;
     }
-      //getRequestByCodeStream(code);
+    //getRequestByCodeStream(code);
   }
+
+  @override
+  void dispose() {
+    _fullnameController?.dispose();
+    _addressController?.dispose();
+    _amountController?.dispose();
+    _emailController?.dispose();
+    _gstinController?.dispose();
+    _identityNoController?.dispose();
+    _upiIdController?.dispose();
+    _phoneNoController?.dispose();
+    _medialController?.dispose();
+    _requestCall = null;
+    super.dispose();
+  }
+  
+  @override
+  void didChangeAppLifecycleState(AppLifecycleState state) {
+    if (state == AppLifecycleState.inactive) {
+    } else if (state == AppLifecycleState.resumed) {
+    setState(() {
+    callbackCameraLink = callbackCamera;
+    callbackVideoLink = callbackVideo;
+    imageUrl = callbackCamera;
+    });
+    }
+  }
+
 
   String getFullname() {
     if ((user != null) && (user.displayName != null)) {
@@ -124,7 +190,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return '';
   }
 
-  Future<String> loadImageFromFirebase(RequestCall u) async {
+  Future<String> loadImageFromFirebase(RequestCall u, String imageType) async {
+    if (imageType == null) {
     if ((u.profileUrl != null) && (u.profileUrl.isNotEmpty)) {
       //_profileUrl = u.profileUrl;
       //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
@@ -142,12 +209,64 @@ class _RaiseRequestState extends State<RaiseRequest> {
         }
       });
     }
+    }
+    if ((imageType != null) && (imageType == 'feedback')) {
+    if ((u.imageUrl != null) && (u.imageUrl.isNotEmpty)) {
+      //_profileUrl = u.profileUrl;
+      //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
+      final String bucket = 'gs://copay-9d0a7.appspot.com/' + u.imageUrl;
+      Future<StorageReference> firebaseStorageRefF =
+          FirebaseStorage.instance.getReferenceFromUrl(bucket);
+      firebaseStorageRefF.then((firebaseStorageRef) async {
+        final dynamic url = await firebaseStorageRef.getDownloadURL();
+        if (url != null) {
+          setState(() {
+            _imageUrl = url;
+          });
+          return _imageUrl;
+        }
+      });
+    }
+    }
+    if ((imageType != null) && (imageType == 'video')) {
+    if ((u.mediaUrl != null) && (u.mediaUrl.isNotEmpty)) {
+      //_profileUrl = u.profileUrl;
+      //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
+      final String bucket = 'gs://copay-9d0a7.appspot.com/' + u.mediaUrl;
+      Future<StorageReference> firebaseStorageRefF =
+          FirebaseStorage.instance.getReferenceFromUrl(bucket);
+      firebaseStorageRefF.then((firebaseStorageRef) async {
+        final dynamic url = await firebaseStorageRef.getDownloadURL();
+        if (url != null) {
+          setState(() {
+            _mediaUrl = url;
+          });
+          return _mediaUrl;
+        }
+      });
+    }
+    }
     Future.value(null);
   }
 
   @override
   void didChangeDependencies() {
+
     profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
+    setState(() {
+    callbackCameraLink = callbackCamera;
+    callbackVideoLink = callbackVideo;
+    });
+    getCameraAndVideoPaths('camera').then((onValue){
+      setState(() {
+        callbackCameraLink = onValue;
+      });
+    });
+    getCameraAndVideoPaths('video').then((onValue){
+      setState(() {
+        callbackVideoLink = onValue;
+      });
+    });
     setState(() {
       _amountController = new MoneyMaskedTextController(
           decimalSeparator: '.',
@@ -173,7 +292,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
           setState(() {
             _requestCall = u;
             //_emailController.text = u.email;
-            loadImageFromFirebase(u);
+            loadImageFromFirebase(u, null);
+            loadImageFromFirebase(u, 'feedback');
+            loadImageFromFirebase(u, 'video');
       _saveEnabled = _requestCall.txnType != null && _requestCall.txnType != 'received';
   _titleController = TextEditingController(text: _requestCall.purpose);
   _fullnameController = TextEditingController(text: _requestCall.name);
@@ -181,11 +302,18 @@ class _RaiseRequestState extends State<RaiseRequest> {
   _emailController = TextEditingController(text: _requestCall.email);
   _addressController = TextEditingController(text: _requestCall.address);
   _identityNoController = TextEditingController(text: _requestCall.identityNo);
+  _gstinController = TextEditingController(text: _requestCall.website);
+  _upiIdController = TextEditingController(text: _requestCall.upiId);
+  _medialController = TextEditingController(text: _requestCall.mediaUrl);
       currency = _requestCall.currency;
       _identityType = _requestCall.identityType;
       individual = _requestCall.individual;
+      upiId = _requestCall.upiId;
+      imageUrl = _requestCall.imageUrl;
+      mediaUrl = _requestCall.mediaUrl;
       amount = _requestCall.amount;
       _amountController.updateValue(amount);
+      _saveEnabled = true;
       _isLoading = false;
           });
         });
@@ -253,6 +381,13 @@ class _RaiseRequestState extends State<RaiseRequest> {
     }
   }
 
+  Widget getMediaIconType(String value) {
+    if ((value == null) || (value.isEmpty)) {
+      return Icon(Icons.minimize, color: Colors.black);
+    }
+    return Icon(Icons.videocam, color: Colors.black);
+  }
+
 
   Widget getIconType(String value) {
     if ((value == null) || (value.isEmpty)) {
@@ -271,17 +406,38 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return null;
   }
 
-  Future uploadPic() async {
-    String fileName = getImageFilename(_image);
+  String getFeedbackImage() {
+    if (_imageUrl != null) {
+      return _imageUrl;
+    }
+    if (_profileUrl != null) {
+      return _profileUrl;
+    }
+    return null;
+  }
+
+  Future uploadPic(String imageUrl, bool isVideo) async {
+    File image = _image;
+    String title = 'Profile Picture uploaded';
+    if (imageUrl != null) {
+        image = new File(imageUrl);
+        title = 'Photo Uploaded';
+        if (isVideo) {
+          title = 'Media Uploaded';
+        }
+    }
+    if (image != null) {
+
+    String fileName = getImageFilename(image);
     StorageReference firebaseStorageRef =
         FirebaseStorage.instance.ref().child(fileName);
-    StorageUploadTask uploadTask = firebaseStorageRef.putFile(_image);
+    StorageUploadTask uploadTask = firebaseStorageRef.putFile(image);
     StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
     setState(() {
-      print('Profile Picture uploaded');
+      print(title);
       //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
       Fluttertoast.showToast(
-          msg: 'Profile picture uploaded',
+          msg: title,
           toastLength: Toast.LENGTH_LONG,
           gravity: ToastGravity.BOTTOM,
           timeInSecForIosWeb: 1,
@@ -289,7 +445,16 @@ class _RaiseRequestState extends State<RaiseRequest> {
           textColor: Colors.white,
           fontSize: 16.0);
     });
+    }
   }
+  
+  Future<void> resetCameraAndVideoPaths(
+      String imagePath, String videoPath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('camera_image_path');
+      await prefs.remove('video_image_path');
+  }
+
 
   Future getImage() async {
     var image = await ImagePicker.pickImage(source: ImageSource.gallery);
@@ -297,7 +462,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
     setState(() {
       _image = image;
       print('Image Path $_image');
-      uploadPic();
+      uploadPic(null, false);
     });
   }
 
@@ -318,7 +483,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
     final RequestCallRepo profileRepo =
         Provider.of<RequestCallRepo>(context, listen: false);
     bool isShowAvatar =
-        (user != null) && ((user.photoUrl != null) || (_profileUrl != null));
+        (user != null) && ((user.photoUrl != null) || (_profileUrl != null) || (callbackCameraLink != null));
+      
+    String feedbackurl = getFeedbackImage();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -346,7 +513,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
               },
             ),
             actions: <Widget>[
-              ((_requestCall != null) && (_requestCall.email != null) && (_requestCall.email == user.email)) ?
+              ((_requestCall != null) && (_requestCall.email != null) && (user != null) && (_requestCall.email == user.email)) ?
               IconButton(
                   key: Key(Keys.logout),
                   icon: Icon(CommunityMaterialIcons.trash_can),
@@ -484,13 +651,16 @@ class _RaiseRequestState extends State<RaiseRequest> {
                       ),
                       SizedBox(height: 10),
                       SwitchListTile(
-                          title: const Text('Individual or Company'),
+                          title: const Text('Individual or Org'),
                           value: _requestCall != null &&
                                   _requestCall.individual != null
                               ? _requestCall.individual
                               : true,
                           onChanged: (bool val) =>
-                              setState(() => _requestCall.individual = val)),
+                              setState(() {
+                                _requestCall.individual = val;
+                                individual = val;
+                              })),
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _fullnameController,
@@ -498,7 +668,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'Person / Company',
+                          labelText: 'Person / Organization',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -512,6 +682,37 @@ class _RaiseRequestState extends State<RaiseRequest> {
                             padding: const EdgeInsetsDirectional.only(
                                 top: 18, start: 50),
                             child: getIconType(_fullnameController.text),
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
+                      ),
+                      if (individual == false)
+                      SizedBox(height: 10),
+                      if (individual == false)
+                      TextFormField(
+                        controller: _gstinController,
+                        enabled: _saveEnabled,
+                        keyboardType: TextInputType.url,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Website / Org URL',
+                          labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: _gstinController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(_gstinController.text),
                           ),
                         ),
                         style: TextStyle(
@@ -610,6 +811,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                             fontSize: 18),
                         //initialValue: address,
                       ),
+                      /*
                       SizedBox(height: 10),
                       DropdownButton<String>(
                         hint: Text('Identity Document Type'),
@@ -675,7 +877,129 @@ class _RaiseRequestState extends State<RaiseRequest> {
                             color: Colors.black,
                             fontSize: 18),
                         //initialValue: fullname,
+                      ),*/
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _upiIdController,
+                        enabled: _saveEnabled,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'UPI ID',
+                          labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: _upiIdController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(_upiIdController.text),
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
                       ),
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _medialController,
+                        enabled: _saveEnabled,
+                        keyboardType: TextInputType.text,
+                        textInputAction: TextInputAction.next,
+                        decoration: InputDecoration(
+                          labelText: 'Audio / Video Link',
+                          labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: _medialController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: 
+                            IconButton(icon: getMediaIconType(_medialController.text),onPressed: (){
+                                print('Starting media');
+                final route = MaterialPageRoute<void>(
+                  builder: (context) {
+                    return AppVideoPlayer(title: _mediaUrl != null ? 'Playing ${_mediaUrl}' : 'Playing', mediaUrl: _mediaUrl,);
+                  },
+                );
+             Navigator.of(context).push(route);
+                            }
+                            ),
+                              
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: fullname,
+                      ),
+                SizedBox(height: 5),
+                if (isShowAvatar)
+                  feedbackurl != null ?
+                  Avatar(
+                    photoUrl: feedbackurl,
+                    radius: 50,
+                    borderColor: Colors.amberAccent,
+                    borderWidth: 2.0,
+                  ):CircleAvatar(
+                      radius: 50,
+                      backgroundColor: Colors.amberAccent,
+                      child: ClipOval(
+                        child: new SizedBox(
+                          width: 90.0,
+                          height: 90.0,
+                          child: callbackCameraLink != null ? Image.file(
+                            File(callbackCameraLink), 
+                            fit: BoxFit.fill,
+                          ) : Image(image: AssetImage('assets/app-logo.png')), 
+                        ),
+                      ),
+                    ),
+                  Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                Text(
+                  callbackCameraLink != null ? callbackVideoLink != null ? 'Saved Photo and Media' : 'Saved Photo': 'No Photo Found',
+                  style: TextStyle(
+                      fontFamily: 'worksans',
+                      fontSize: 20,
+                      fontWeight: FontWeight.w500,
+                      color: Colors.black),
+                ),
+                  Padding(
+                    padding: EdgeInsets.only(left: 5.0),
+                    child: IconButton(
+                      icon: Icon(
+                        FontAwesomeIcons.camera,
+                        size: 20.0,
+                      ),
+                      onPressed: () {
+                        //getImage();
+                final route = MaterialPageRoute<void>(
+                  builder: (context) {
+                    _requestCall.email = user.email;
+                    return CameraAppHome(user: user, code: code, requestCall: _requestCall);
+                  },
+                );
+             Navigator.of(context).push(route);
+                      },
+                    ),
+                  ),
+                ]),
                     ],
                   ),
                 ),
@@ -683,7 +1007,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                 SizedBox(
                   width: 200,
                   child: _saveEnabled == false ? 
-                    Center(child: Text(code != null ? code : '' + ' Saved', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),) 
+                    Center(child: Text(code != null ? '': '', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),) 
                   : FlatButton(
                     color: CustomColors.LightGrey,
                     textColor: CustomColors.DarkBlue,
@@ -736,6 +1060,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
                           amount: _amountController.numberValue,
                           currency: _amountController.leftSymbol,
                           profileUrl: getImageFilename(_image),
+                          imageUrl: callbackCameraLink != null ? getImageFilename(File(callbackCameraLink)) : _requestCall.imageUrl,
+                          mediaUrl: callbackVideoLink != null ? getImageFilename(File(callbackVideoLink)) : _requestCall.mediaUrl,
+
                         );
                         final String validationResult = data.validate();
                         bool status = validationResult == '';
@@ -748,8 +1075,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         defaultActionText: 'Validate and Save',
                       ).show(context);
                       if (yesno == true) {
+                        await uploadPic(callbackCameraLink, false);
+                        await uploadPic(callbackVideoLink, true);
                           status = await profileRepo.saveRequestCall(data);
                           if (status) {
+                            await resetCameraAndVideoPaths(null, null);
                             print('Saved profile information');
                             Fluttertoast.showToast(
                                 msg: 'Request has been successfully submitted',
@@ -839,9 +1169,9 @@ class MyDialog extends StatelessWidget {
                         Padding(
                           padding: const EdgeInsets.only(left: 10.0),
                           child: Text(
-                            "Exporting...",
+                            'Please Wait...',
                             style: TextStyle(
-                              fontFamily: "OpenSans",
+                              fontFamily: 'OpenSans',
                               color: Color(0xFF5B6978),
                             ),
                           ),

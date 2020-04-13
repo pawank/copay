@@ -65,6 +65,10 @@ target 'Runner' do
   pod 'Flutter', :path => 'Flutter'
 
   # Plugin Pods
+    # add the Firebase pod for Google Analytics
+    pod 'Firebase/Analytics'
+    # # add pods for any other desired Firebase products
+    # # https://firebase.google.com/docs/ios/setup#available-pods
 
   # Prepare symlinks folder. We use symlinks to avoid having Podfile.lock
   # referring to absolute paths on developers' machines.
@@ -81,10 +85,15 @@ end
 # Prevent Cocoapods from embedding a second Flutter framework and causing an error with the new Xcode build system.
 install! 'cocoapods', :disable_input_output_paths => true
 
+
 post_install do |installer|
   installer.pods_project.targets.each do |target|
     target.build_configurations.each do |config|
-      config.build_settings['ENABLE_BITCODE'] = 'NO'
+      config.build_settings['ENABLE_BITCODE'] = 'NO',
+      
+      config.build_settings['GCC_PREPROCESSOR_DEFINITIONS'] ||= [
+        '$(inherited)'
+    ]
     end
   end
 end
