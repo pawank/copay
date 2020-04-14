@@ -4,6 +4,8 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:contact_picker/contact_picker.dart';
+import 'package:copay/app/landing_page.dart';
 import 'package:copay/common_widgets/avatar.dart';
 import 'package:copay/common_widgets/video_player_app.dart';
 import 'package:copay/constants/keys.dart';
@@ -22,10 +24,12 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_masked_text/flutter_masked_text.dart';
+import 'package:flutter_share/flutter_share.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
@@ -94,6 +98,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
   //Function _callbackVideoF;
   String callbackCameraLink;
   String callbackVideoLink;
+  int _selectedIndex = 0;
+  final ContactPicker _contactPicker = new ContactPicker();
+  Contact _contact;
   
   //image / video
   Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
@@ -160,6 +167,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
     _phoneNoController?.dispose();
     _medialController?.dispose();
     _requestCall = null;
+    _contact = null;
     super.dispose();
   }
   
@@ -477,6 +485,72 @@ class _RaiseRequestState extends State<RaiseRequest> {
           ],
         ),
       );
+
+Future<void> share(String title, String desc, String link, String amount) async {
+    await FlutterShare.share(
+      title: '[CoPay] Need Help For: $title',
+      text: 'Purpose: $desc\nDonation Request for: $amount',
+      linkUrl: link,
+      chooserTitle: title
+    );
+  }
+
+  Future<void> shareFile(String title, String desc, String link, String amount) async {
+    /*
+    await FlutterShare.shareFile(
+      title: '[CoPay] Need Help For: $title',
+      text: desc,
+      filePath: link,
+      chooserTitle: title
+    );*/
+    await FlutterShare.share(
+      title: '[CoPay] Need Help For: $title',
+      text: 'Purpose: $desc\nDonation Request for: $amount',
+      linkUrl: link,
+      chooserTitle: title
+    );
+  }
+
+  Future<void> _onItemTapped(int index) async {
+    print('Tapped for action');
+  setState(() {
+    _selectedIndex = index;
+  });
+  switch(_selectedIndex) {
+    case 0:
+    //Navigator.of(context).pop();
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return LandingPage(title: 'CoPay',);
+                },
+              ),
+            );
+      break;
+      case 1:
+                      String amttext = '${_requestCall.currency} ${_requestCall.amount}';
+                      if (_requestCall.mediaUrl != null) {
+                      shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
+
+                      } else {
+                      share(_requestCall.name, _requestCall.purpose, '', amttext);
+                      }
+      break;
+      case 2:
+      Contact contact = await _contactPicker.selectContact();
+              setState(() {
+                _contact = contact;
+              });
+              if (_contact != null) {
+                print('Sending API request for contact = $_contact');
+              }
+      break;
+
+      default:
+      break;
+  }
+}
 
   @override
   Widget build(BuildContext context) {
@@ -1005,18 +1079,47 @@ class _RaiseRequestState extends State<RaiseRequest> {
                 ),
                 SizedBox(height: 30),
                 SizedBox(
-                  width: 200,
+                  height: 40,
+                  width: double.infinity,
                   child: _saveEnabled == false ? 
-                    Center(child: Text(code != null ? '': '', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),),) 
-                  : FlatButton(
-                    color: CustomColors.LightGrey,
-                    textColor: CustomColors.DarkBlue,
-                    
-                    child: Text(
-                      'Save Request',
-                      style: TextStyle(
+                        Text('')
+                  /*
+                    RaisedButton(
+                      color: Colors.blue,
+                      padding: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: Text('Share',style:
+                        TextStyle(
                           fontFamily: 'worksans',
-                          color: CustomColors.DarkBlue,
+                          color: Colors.white,
+                          fontSize: 18),
+                    ),
+                    onPressed: () {
+                      String amttext = '${_requestCall.currency} ${_requestCall.amount}';
+                      if (_requestCall.mediaUrl != null) {
+                      shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
+
+                      } else {
+                      share(_requestCall.name, _requestCall.purpose, '', amttext);
+                      }
+                    },
+                    onLongPress: (){
+                      String amttext = '${_requestCall.currency} ${_requestCall.amount}';
+                      if (_requestCall.mediaUrl != null) {
+                      shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
+
+                      } else {
+                      share(_requestCall.name, _requestCall.purpose, '', amttext);
+                      }
+                    },
+                    )*/
+                  : 
+                    RaisedButton(
+                      color: Colors.blue,
+                      padding: const EdgeInsets.only(top: 8, bottom: 8),
+                      child: Text('Save Request',style:
+                        TextStyle(
+                          fontFamily: 'worksans',
+                          color: Colors.white,
                           fontSize: 18),
                     ),
                     onPressed: _saveEnabled == true ? () async {
@@ -1124,9 +1227,6 @@ class _RaiseRequestState extends State<RaiseRequest> {
                         setState(() => _dialogState = DialogState.COMPLETED);
                         setState(() => _dialogState = DialogState.DISMISSED);
                     } : null,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(30.0),
-                    ),
                   ),
                 ),
                 MyDialog(
@@ -1134,6 +1234,27 @@ class _RaiseRequestState extends State<RaiseRequest> {
                 ),
               ],
             ),
+          ),
+        bottomNavigationBar: BottomNavigationBar(
+          unselectedItemColor: Theme.of(context).primaryColor,
+          selectedItemColor: Theme.of(context).primaryColor,
+          items: [
+            BottomNavigationBarItem(
+              icon: Icon(Icons.home),
+              activeIcon: Icon(Icons.home),
+              title: Text('Home'),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.share),
+              title: Text('Share'),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.send),
+              title: Text('Request Contact'),
+            ),
+          ],
+          currentIndex: _selectedIndex,
+          onTap: _onItemTapped,
           ),
         ),
         ),
