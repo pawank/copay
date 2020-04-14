@@ -150,7 +150,9 @@ class LandingPage extends StatelessWidget {
                   docs.forEach((doc){
                     totalPaid += doc['amount'];
                     if ((doc['txnType'] != null) && (doc['txnType'] == 'received')) {
-                    totalReceived += doc['amount'];
+                      totalReceived += doc['amount'];
+                    } else if ((doc['status'] != null) && (doc['status'] == 'Paid')) {
+                      totalReceived += doc['amount'];
                     }
                           DateTime dt = (doc['createdOn'] as Timestamp).toDate();
                           lastDate = 'Till ' + new DateFormat.yMMMMd('en_US').format(dt);
@@ -321,111 +323,6 @@ class LandingPage extends StatelessWidget {
   }
 }
 
-class SendReceiveSwitch extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        color: Colors.white54,
-      ),
-      padding: EdgeInsets.all(21.0),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: <Widget>[
-          DragTarget(
-            builder: (context, List<int> candidateData, rejectedData) {
-              return Container(
-                padding: EdgeInsets.all(5.0),
-                child: Text(
-                  'Donate',
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            },
-            onWillAccept: (dynamic data) {
-              return true;
-            },
-            onAccept: (dynamic data) {
-              Scaffold.of(context).showSnackBar(
-                SnackBar(
-                  content: Text('Receive!'),
-                ),
-              );
-            },
-          ),
-          Draggable(
-            data: 5,
-            child: Container(
-              width: 51,
-              height: 51,
-              padding: EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.white54, Theme.of(context).primaryColor],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.3, 1]),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.attach_money,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            feedback: Container(
-              width: 51,
-              height: 51,
-              padding: EdgeInsets.all(10.0),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                    colors: [Colors.white54, Theme.of(context).primaryColor],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: [0.3, 1]),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(
-                Icons.attach_money,
-                color: Theme.of(context).primaryColor,
-              ),
-            ),
-            axis: Axis.horizontal,
-            childWhenDragging: Container(
-              width: 51,
-              height: 51,
-            ),
-          ),
-          DragTarget(
-            builder: (context, List<int> candidateData, rejectedData) {
-              return Container(
-                padding: EdgeInsets.all(10.0),
-                child: Text(
-                  'Pay',
-                  style: TextStyle(color: Colors.white),
-                ),
-              );
-            },
-            onWillAccept: (dynamic data) {
-              return true;
-            },
-            onAccept: (dynamic data) {
-              Navigator.push(
-                context,
-                MaterialPageRoute<void>(
-                  builder: (context) {
-                    return SendScreen();
-                  },
-                ),
-              );
-            },
-          ),
-        ],
-      ),
-    );
-  }
-}
-
 class CustomButton extends StatelessWidget {
   final ButtonType buttonType;
   final User user;
@@ -527,92 +424,6 @@ class CustomButton extends StatelessWidget {
             ],
           ),
         ),
-      ),
-    );
-  }
-}
-
-class SendScreen extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: Text('Send Money'),
-        centerTitle: true,
-      ),
-      body: Column(
-        children: <Widget>[
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            children: <Widget>[
-              Text(
-                'Select Payee',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 19.0),
-              ),
-              IconButton(
-                icon: Icon(Icons.search),
-                onPressed: () {},
-              )
-            ],
-          ),
-          Expanded(
-            child: ListView.builder(
-              itemCount: 4,
-              itemBuilder: (context, payees) {
-                return ListTile(
-                  title: PayeeContainer(),
-                  onTap: () {},
-                );
-              },
-            ),
-          )
-        ],
-      ),
-    );
-  }
-}
-
-class PayeeContainer extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      alignment: Alignment.center,
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          Flexible(
-            flex: 1,
-            child: ClipRRect(
-              borderRadius: BorderRadius.circular(15),
-              child: Image.network(
-                'https://cdn.pixabay.com/photo/2017/11/02/14/26/model-2911329_960_720.jpg',
-              ),
-            ),
-          ),
-          Flexible(
-            flex: 6,
-            child: Container(
-              padding: EdgeInsets.all(13.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: <Widget>[
-                  Text(
-                    'John Doe',
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    '+213123456789',
-                    style: TextStyle(
-                      color: Colors.grey[700],
-                    ),
-                  )
-                ],
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }
