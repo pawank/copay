@@ -49,7 +49,8 @@ class CloudStoreConvertor {
           updatedOn: doc['updatedOn'] != null ? doc['updatedOn'] as Timestamp : Timestamp.now(),
           requestedOn: doc['requestedOn'] != null ? doc['requestedOn'] as Timestamp : Timestamp.now(),
           owner: owner,
-          donor: donor
+          donor: donor,
+          paymentOn: doc['paymentOn'] != null ? doc['paymentOn'] as Timestamp : Timestamp.now()
           );
     
     } catch (e) {

@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:copay/models/request_call.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
 import 'package:provider/provider.dart';
@@ -10,18 +11,18 @@ import 'dart:math';
 import 'package:upi_pay/upi_pay.dart';
 
 class UPIScreen extends StatefulWidget {
-  UPIScreen({@required this.request, this.callbackPayment});
+  UPIScreen({@required this.request, this.donation});
   UpiIndia request;
-  Function callbackPayment;
+  RequestCall donation;
   @override
-  _UPIScreenState createState() => _UPIScreenState(request, callbackPayment);
+  _UPIScreenState createState() => _UPIScreenState(request, donation);
 }
 
 class _UPIScreenState extends State<UPIScreen> {
-  _UPIScreenState(this.request, this.callbackPayment);
+  _UPIScreenState(this.request, this.donation);
   Future _transaction;
   UpiIndia request;
-  Function callbackPayment;
+  RequestCall donation;
   String _upiAddrError;
   final _upiAddressController = TextEditingController();
   final _amountController = TextEditingController();
@@ -37,8 +38,18 @@ class _UPIScreenState extends State<UPIScreen> {
         transactionRefId: request.transactionRefId,
         transactionNote: request.transactionNote,
         amount: request.amount,
-        currency: request.currency);
-
+        currency: request.currency,
+    );
+    /*
+    UpiIndia upi = new UpiIndia(
+      app: app,
+      receiverUpiId: 'tester@test',
+      receiverName: 'Tester',
+      transactionRefId: 'TestingId',
+      transactionNote: 'Not actual. Just an example.',
+      amount: 1.00,
+    );
+    */
     //return response;
     final String response = await upi.startTransaction();
     if ((response != null) && (response.contains('Status=FAILURE'))) {
@@ -50,8 +61,14 @@ class _UPIScreenState extends State<UPIScreen> {
                               backgroundColor: Colors.red,
                               textColor: Colors.white,
                               fontSize: 16.0);
+                              Navigator.pop(context, response);
+    } else {
+      setState(() {
+        donation.status = 'Paid';
+      });
     }
-    return Future.value(response);
+    //return Future.value(response);
+    return response;
   }
 
   @override
@@ -265,7 +282,6 @@ class _UPIScreenState extends State<UPIScreen> {
                       );
                       break;
                     default:
-                      callbackPayment(snapshot.data);
                       UpiIndiaResponse _upiResponse;
                       _upiResponse = UpiIndiaResponse(snapshot.data);
                       String txnId = _upiResponse.transactionId;

@@ -5,7 +5,7 @@ import 'package:copay/services/auth_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 
-enum RequestSummaryType { sent, received, pending }
+enum RequestSummaryType { sent, received, pending, failed }
 
 class RequestSummary extends StatelessWidget {
   const RequestSummary(
@@ -62,6 +62,11 @@ class RequestSummary extends StatelessWidget {
         transactionName = 'Pending';
         transactionIconData = Icons.arrow_downward;
         color = Colors.orange;
+        break;
+      case RequestSummaryType.failed:
+        transactionName = 'Payment Failed';
+        transactionIconData = Icons.error;
+        color = Colors.red;
         break;
     }
     return Container(

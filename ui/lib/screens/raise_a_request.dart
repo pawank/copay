@@ -112,6 +112,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   contact_select.Contact _contact;
   String _friendContactEmail;
   dynamic _paymentData;
+  UpiIndiaResponse _upiResponse;
   
   //image / video
   Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
@@ -585,6 +586,45 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
   );
 }
 
+bool isPaymentDone() {
+  bool status = false;
+  if (_requestCall != null) {
+    status = _requestCall.txnRef != null && _requestCall.txnRef.isNotEmpty && _requestCall.status == 'Paid';
+  }
+  if (!status) {
+    status = _upiResponse != null && _upiResponse.status == 'success' && _upiResponse.transactionId.isNotEmpty;
+  }
+  return status;
+}
+
+Future<String> callUpiPayment(UpiIndia upi) async {
+            final data = await Navigator.push(
+              context,
+              MaterialPageRoute<String>(
+                builder: (context) {
+                  return UPIScreen(request: upi, donation: _requestCall,);
+                },
+              ),
+            ) as String;
+            //print('Data found: $data');
+            setState(() {
+              _upiResponse = UpiIndiaResponse(data);
+            });
+            if ((_requestCall != null) && (_upiResponse != null)) {
+              if (_upiResponse.status == 'failure') {
+                _requestCall.status = 'Payment Failed';
+              }
+              if (_upiResponse.status == 'success') {
+                _requestCall.status = 'Paid';
+              }
+                _requestCall.txnRef = _upiResponse.transactionId;
+                _requestCall.paymentOn = Timestamp.now();
+                await donationRepo.saveRequestCall(_requestCall);
+                await profileRepo.saveRequestCall(_requestCall);
+            }
+            return Future.value(data);
+}
+
   Future<void> _onItemTapped(int index) async {
     print('Tapped for action');
   setState(() {
@@ -603,7 +643,22 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
             );
       break;
       case 1:
-
+      if (isPaymentDone()) {
+        String msg = 'Paid ${_requestCall.currency} ${_requestCall.amount}';
+        if (_requestCall.paymentOn != null) {
+                          DateTime dt = _requestCall.paymentOn.toDate();
+                          String date = new DateFormat.yMMMMEEEEd('en_US').format(dt);
+          msg = msg + ' on $date';
+        }
+                            Fluttertoast.showToast(
+                                msg: msg,
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.green,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+      } else {
     UpiIndia upi = new UpiIndia(
       app: UpiIndiaApps.GooglePay,
       receiverUpiId: _requestCall.upiId,
@@ -612,14 +667,8 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
       transactionNote: 'Purpose: ${_requestCall.purpose}',
       amount: _requestCall.amount,
     );
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) {
-                  return UPIScreen(request: upi, callbackPayment: callbackPayment);
-                },
-              ),
-            );
+    callUpiPayment(upi);
+      }
         break;
       case 2:
                       String amttext = '${_requestCall.currency} ${_requestCall.amount}';
@@ -1432,8 +1481,8 @@ users.take(1).forEach((c) async {
               title: Text('Home'),
             ),
             BottomNavigationBarItem(
-              icon: Icon(Icons.payment),
-              title: Text('Pay'),
+              icon: _upiResponse == null ? !isPaymentDone() ? Icon(Icons.payment) : Icon(Icons.done_all) : Icon(Icons.error),
+              title: Text(isPaymentDone() ? 'Paid' : 'Pay'),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.share),

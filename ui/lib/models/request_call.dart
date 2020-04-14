@@ -29,6 +29,7 @@ class RequestCall extends ChangeNotifier {
   Map<String, String> owner;
   Map<String, String> donor;
   Timestamp requestedOn;
+  Timestamp paymentOn;
 
   RequestCall(
       {
@@ -58,7 +59,8 @@ class RequestCall extends ChangeNotifier {
       this.updatedOn,
       this.requestedOn,
       this.owner,
-      this.donor
+      this.donor,
+      this.paymentOn
       });
 
   static Map<String, String> getOwner(Map doc) {
@@ -108,7 +110,10 @@ class RequestCall extends ChangeNotifier {
             ? (snapshot['requestedOn'] as Timestamp)
             : null,
         owner = getOwner(snapshot),
-        donor = getDonor(snapshot);
+        donor = getDonor(snapshot),
+        paymentOn = snapshot['paymentOn'] != null
+            ? (snapshot['paymentOn'] as Timestamp)
+            : null;
 
   dynamic toJson() {
     return {
@@ -138,7 +143,8 @@ class RequestCall extends ChangeNotifier {
       'updatedOn': updatedOn,
       'requestedtOn': requestedOn,
       'owner': owner,
-      'donor': donor
+      'donor': donor,
+      'paymentOn': paymentOn
     };
   }
 

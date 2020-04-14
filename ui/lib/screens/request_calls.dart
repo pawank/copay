@@ -164,10 +164,12 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                         final RequestCall obj = CloudStoreConvertor.toObject(document);
                         if (obj != null) {
                           var txnType = RequestSummaryType.pending; 
-                          if (obj.txnType == 'sent') {
+                          if ((obj.txnType == 'sent') || (obj.status == 'Requested')) {
                             txnType = RequestSummaryType.sent;
-                          } else if (obj.txnType == 'received') {
+                          } else if ((obj.txnType == 'received') || (obj.status == 'Paid')) {
                             txnType = RequestSummaryType.received;
+                          } else if ((obj.txnType == 'failure') || (obj.status == 'Payment Failed')) {
+                            txnType = RequestSummaryType.failed;
                           }
                           DateTime dt = obj.createdOn.toDate();
                           String date = new DateFormat.yMMMMd('en_US').format(dt);
