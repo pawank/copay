@@ -293,6 +293,7 @@ class LandingPage extends StatelessWidget {
                   );
               }
             }),
+            /*
         bottomNavigationBar: BottomNavigationBar(
           unselectedItemColor: Theme.of(context).primaryColor,
           selectedItemColor: Theme.of(context).primaryColor,
@@ -314,7 +315,7 @@ class LandingPage extends StatelessWidget {
               title: Text('Settings'),
             ),
           ],
-        ),
+        ),*/
       ),
     );
   }

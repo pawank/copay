@@ -16,6 +16,7 @@ import 'package:copay/models/request_call.dart';
 import 'package:copay/screens/camera_app.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
+import 'package:copay/screens/upi_app.dart';
 import 'package:copay/services/api.dart';
 import 'package:copay/services/donation_api_impl.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
@@ -35,6 +36,7 @@ import 'package:intl/intl.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:upi_india/upi_india.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
 import '../util.dart';
@@ -109,6 +111,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   final contact_select.ContactPicker _contactPicker = new contact_select.ContactPicker();
   contact_select.Contact _contact;
   String _friendContactEmail;
+  dynamic _paymentData;
   
   //image / video
   Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
@@ -125,6 +128,10 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return Future.value(null);
   }
 
+  void callbackPayment(dynamic data) {
+      _paymentData = data;
+      print('Received payment data: $data');
+  }
 
   String getLocalCurrency(BuildContext context) {
     Locale locale = Localizations.localeOf(context);
@@ -595,6 +602,25 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
               ),
             );
       break;
+      case 1:
+
+    UpiIndia upi = new UpiIndia(
+      app: UpiIndiaApps.GooglePay,
+      receiverUpiId: _requestCall.upiId,
+      receiverName: _requestCall.owner != null ? _requestCall.owner['name'] : user.displayName,
+      transactionRefId: 'TXN${_requestCall.code}',
+      transactionNote: 'Purpose: ${_requestCall.purpose}',
+      amount: _requestCall.amount,
+    );
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return UPIScreen(request: upi, callbackPayment: callbackPayment);
+                },
+              ),
+            );
+        break;
       case 2:
                       String amttext = '${_requestCall.currency} ${_requestCall.amount}';
                       if (_requestCall.mediaUrl != null) {
@@ -1394,7 +1420,9 @@ users.take(1).forEach((c) async {
               ],
             ),
           ),
-        bottomNavigationBar: BottomNavigationBar(
+        bottomNavigationBar: 
+        _saveEnabled == false ?
+        BottomNavigationBar(
           unselectedItemColor: Theme.of(context).primaryColor,
           selectedItemColor: Theme.of(context).primaryColor,
           items: [
@@ -1418,7 +1446,7 @@ users.take(1).forEach((c) async {
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
-          ),
+          ) : Text(''),
         ),
         ),
       ),

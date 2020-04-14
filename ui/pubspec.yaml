@@ -54,6 +54,8 @@ dependencies:
   share: 0.6.3+6
   flutter_share: 1.0.2+1
   contact_picker: 0.0.2
+  upi_india: 1.1.2
+  upi_pay: 0.2.1
   flutter:
     sdk: flutter
 
