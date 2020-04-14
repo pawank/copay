@@ -4,7 +4,8 @@ import 'dart:io';
 import 'package:camera/camera.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:contact_picker/contact_picker.dart';
+import 'package:contact_picker/contact_picker.dart' as contact_select;
+import 'package:contacts_service/contacts_service.dart';
 import 'package:copay/app/landing_page.dart';
 import 'package:copay/common_widgets/avatar.dart';
 import 'package:copay/common_widgets/video_player_app.dart';
@@ -15,6 +16,7 @@ import 'package:copay/models/request_call.dart';
 import 'package:copay/screens/camera_app.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
+import 'package:copay/services/api.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
 import 'package:currency_pickers/country.dart';
@@ -29,6 +31,7 @@ import 'package:fluttertoast/fluttertoast.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:intl/intl.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:share/share.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:uuid/uuid.dart';
@@ -99,8 +102,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
   String callbackCameraLink;
   String callbackVideoLink;
   int _selectedIndex = 0;
-  final ContactPicker _contactPicker = new ContactPicker();
-  Contact _contact;
+  final contact_select.ContactPicker _contactPicker = new contact_select.ContactPicker();
+  contact_select.Contact _contact;
+  String _friendContactEmail;
   
   //image / video
   Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
@@ -481,7 +485,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
             SizedBox(
               width: 8.0,
             ),
-            Text("+${country.currencyCode}(${country.isoCode})"),
+            Text('+${country.currencyCode}(${country.isoCode})'),
           ],
         ),
       );
@@ -510,6 +514,60 @@ Future<void> share(String title, String desc, String link, String amount) async 
       chooserTitle: title
     );
   }
+  
+  Future<bool> checkAndRequestPermissionForContacts() async {
+    var status = await Permission.contacts.status;
+    PermissionStatus permStatus = null;
+    if (status.isUndetermined) {
+      // We didn't ask for permission yet.
+      permStatus = await Permission.contacts.request();
+    } else if (status.isDenied) {
+      permStatus = await Permission.contacts.request();
+    } else if (status.isGranted) {
+      permStatus = status;
+    }
+    if (permStatus.isGranted) {
+      return Future.value(true);
+    }
+    return Future.value(false);
+  }
+
+Future<String> _asyncInputDialog(BuildContext context) async {
+  String email = '';
+  return showDialog<String>(
+    context: context,
+    barrierDismissible: false, // dialog is dismissible with a tap on the barrier
+    builder: (BuildContext context) {
+      return AlertDialog(
+        title: Text('Contact Email Address'),
+        content: new Row(
+          children: <Widget>[
+            new Expanded(
+                child: new TextField(
+              autofocus: true,
+              decoration: new InputDecoration(
+                  labelText: 'Friend email address', hintText: 'No email found in your contact. Please provide the same.'),
+              onChanged: (value) {
+                email = value;
+              },
+            ))
+          ],
+        ),
+        actions: <Widget>[
+          FlatButton(
+            child: Text('Submit'),
+            onPressed: () {
+              setState(() {
+                _friendContactEmail = email;
+              });
+              Navigator.of(context).pop(email);
+            },
+          ),
+        ],
+      );
+    },
+  );
+}
 
   Future<void> _onItemTapped(int index) async {
     print('Tapped for action');
@@ -538,13 +596,63 @@ Future<void> share(String title, String desc, String link, String amount) async 
                       }
       break;
       case 2:
-      Contact contact = await _contactPicker.selectContact();
+      final perm = await checkAndRequestPermissionForContacts();
+      if (perm) {
+
+      contact_select.Contact contact = await _contactPicker.selectContact();
               setState(() {
                 _contact = contact;
               });
               if (_contact != null) {
-                print('Sending API request for contact = $_contact');
+                //print('Sending API request for contact = $_contact');
+                // Get contacts matching a string
+Iterable<Contact> users = await ContactsService.getContacts(query : _contact.fullName);
+print('No. of matching contact found = ${users.length} for query = ${_contact.fullName}');
+users.forEach((c) async {
+    String email = null;
+    if (c.emails != null) {
+      if (c.emails.isNotEmpty) {
+        email = c.emails.firstWhere((e) => e.value.isNotEmpty).value;
+      }
+    }
+    if ((email == null) || (email.isEmpty)) {
+      final emailResult = await _asyncInputDialog(context);
+      print(emailResult);
+      email = _friendContactEmail;
+    }
+                final request_json = {
+   'owner':{
+      'name':user.displayName,
+      'email':user.email
+   },
+   'donor':{
+      'name':c.displayName,
+      'email': email
+   },
+   'campaign':{
+      'id':1,
+      'url':'https://api.copay.foundation',
+      'message':_requestCall.purpose,
+      'receiver':{
+         'name':_requestCall.name
+      }
+   }
+};
+        print('Request JSON = $request_json');
+        final r = await HttpApi.raiseCompaignRequestDonor(request_json);
+});
               }
+      } else {
+
+                            Fluttertoast.showToast(
+                                msg: 'Contacts Permission Denied',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+      }
       break;
 
       default:
@@ -684,7 +792,7 @@ Future<void> share(String title, String desc, String link, String amount) async 
                           //print(country.currencyCode);
                           //print(country.currencyName);
                           //print(country.iso3Code);
-                          //print("${country.name}");
+                          //print('${country.name}');
                           final String curr = '${country.currencyCode} ';
                           setState(() {
                             _amountController = new MoneyMaskedTextController(
