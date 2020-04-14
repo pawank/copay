@@ -630,8 +630,8 @@ users.forEach((c) async {
       'email': email
    },
    'campaign':{
-      'id':1,
-      'url':'https://api.copay.foundation',
+      'id': code,
+      'url': HttpApi.BASE_API,
       'message':_requestCall.purpose,
       'receiver':{
          'name':_requestCall.name
@@ -639,7 +639,7 @@ users.forEach((c) async {
    }
 };
         print('Request JSON = $request_json');
-        final r = await HttpApi.raiseCompaignRequestDonor(request_json);
+        final r = await HttpApi.raiseCompaignRequestDonor(_requestCall.code, request_json);
 });
               }
       } else {
