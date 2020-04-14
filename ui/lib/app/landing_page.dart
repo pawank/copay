@@ -1,6 +1,7 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/screens/contacts.dart';
+import 'package:copay/screens/donations.dart';
 import 'package:copay/screens/raise_a_request.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
@@ -229,12 +230,12 @@ class LandingPage extends StatelessWidget {
                                   ),
                                   Flexible(
                                     child: CustomButton(
-                                        buttonType: ButtonType.donate,
+                                        buttonType: ButtonType.receiptients,
                                         user: user),
                                   ),
                                   Flexible(
                                     child: CustomButton(
-                                        buttonType: ButtonType.receiptients,
+                                        buttonType: ButtonType.donate,
                                         user: user),
                                   ),
                                   /*
@@ -441,7 +442,7 @@ class CustomButton extends StatelessWidget {
         buttonImage = 'assets/donation.png';
         break;
       case ButtonType.receiptients:
-        buttonText = 'Friends';
+        buttonText = 'My Requests';
         buttonImage = 'assets/users.png';
         break;
       case ButtonType.offers:
@@ -464,7 +465,7 @@ class CustomButton extends StatelessWidget {
               ),
             );
           }
-          else if (buttonText == 'Donate') {
+          else if (buttonText == 'My Requests') {
             Navigator.push(
               context,
               MaterialPageRoute<void>(
@@ -477,12 +478,12 @@ class CustomButton extends StatelessWidget {
               ),
             );
           }
-          else if (buttonText == 'Friends') {
+          else if (buttonText == 'Donate') {
             Navigator.push(
               context,
               MaterialPageRoute<void>(
                 builder: (context) {
-                  return ContactScreen(
+                  return DonationScreen(
                     user: user,
                     code: '',
                   );

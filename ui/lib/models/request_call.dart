@@ -26,6 +26,9 @@ class RequestCall extends ChangeNotifier {
   String imageUrl;
   String mediaUrl;
   Timestamp updatedOn;
+  Map<String, String> owner;
+  Map<String, String> donor;
+  Timestamp requestedOn;
 
   RequestCall(
       {
@@ -52,7 +55,25 @@ class RequestCall extends ChangeNotifier {
       this.feedback,
       this.imageUrl,
       this.mediaUrl,
-      this.updatedOn});
+      this.updatedOn,
+      this.requestedOn,
+      this.owner,
+      this.donor
+      });
+
+  static Map<String, String> getOwner(Map doc) {
+      final Map<String, String> owner = doc['owner'] != null
+          ? Map<String, String>.from(doc['owner'])
+          : Map<String, String>();
+      return owner;
+  }
+  
+  static Map<String, String> getDonor(Map doc) {
+      final Map<String, String> donor = doc['donor'] != null
+          ? Map<String, String>.from(doc['donor'])
+          : Map<String, String>();
+      return donor;
+  }
 
   RequestCall.fromMap(Map snapshot, String id)
       : userId = id ?? '',
@@ -82,7 +103,12 @@ class RequestCall extends ChangeNotifier {
         mediaUrl = snapshot['mediaUrl'] ?? '',
         updatedOn = snapshot['updatedOn'] != null
             ? (snapshot['updatedOn'] as Timestamp)
-            : null;
+            : null,
+        requestedOn = snapshot['requestedOn'] != null
+            ? (snapshot['requestedOn'] as Timestamp)
+            : null,
+        owner = getOwner(snapshot),
+        donor = getDonor(snapshot);
 
   dynamic toJson() {
     return {
@@ -109,7 +135,10 @@ class RequestCall extends ChangeNotifier {
       'feedback': feedback,
       'imageUrl': imageUrl,
       'mediaUrl': mediaUrl,
-      'updatedOn': updatedOn
+      'updatedOn': updatedOn,
+      'requestedtOn': requestedOn,
+      'owner': owner,
+      'donor': donor
     };
   }
 

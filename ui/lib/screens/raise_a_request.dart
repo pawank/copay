@@ -1,6 +1,6 @@
 import 'dart:ffi';
 import 'dart:io';
-
+import 'dart:convert';
 import 'package:camera/camera.dart';
 import 'package:chewie/chewie.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -17,6 +17,7 @@ import 'package:copay/screens/camera_app.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/services/api.dart';
+import 'package:copay/services/donation_api_impl.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
 import 'package:currency_pickers/country.dart';
@@ -50,23 +51,26 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 
 class RaiseRequest extends StatefulWidget {
-  RaiseRequest({@required this.user, @required this.code, this.callbackCamera, this.callbackVideo});
+  RaiseRequest({@required this.user, @required this.code, this.callbackCamera, this.callbackVideo, @required this.requestOrDonation});
   final User user;
   final String code;
   final String callbackCamera;
   final String callbackVideo;
+  final String requestOrDonation;
   @override
-  _RaiseRequestState createState() => _RaiseRequestState(user, code,callbackCamera,callbackVideo);
+  _RaiseRequestState createState() => _RaiseRequestState(user, code,callbackCamera,callbackVideo, requestOrDonation);
 }
 
 class _RaiseRequestState extends State<RaiseRequest> {
-  _RaiseRequestState(this.user, this.code, this.callbackCamera, this.callbackVideo);
+  _RaiseRequestState(this.user, this.code, this.callbackCamera, this.callbackVideo, this.requestOrDonation);
   final User user;
   final String code;
   final String callbackCamera;
   final String callbackVideo;
+  final String requestOrDonation;
   bool _isLoading = true;
   RequestCallRepo profileRepo;
+  DonationRepo donationRepo;
   bool _saveEnabled = true;
   var index = 0;
   String email;
@@ -172,6 +176,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
     _medialController?.dispose();
     _requestCall = null;
     _contact = null;
+    profileRepo = null;
+    donationRepo = null;
     super.dispose();
   }
   
@@ -263,8 +269,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
 
   @override
   void didChangeDependencies() {
-
     profileRepo = Provider.of<RequestCallRepo>(context, listen: false);
+    donationRepo = Provider.of<DonationRepo>(context, listen: false);
     setState(() {
     callbackCameraLink = callbackCamera;
     callbackVideoLink = callbackVideo;
@@ -285,8 +291,10 @@ class _RaiseRequestState extends State<RaiseRequest> {
           thousandSeparator: ',',
           leftSymbol: getLocalCurrency(context));
     });
-    if (profileRepo != null) {
-      profileRepo.fetchRequestCallsByCode(code).then((users) {
+    bool isrequestOrDonation = profileRepo != null && donationRepo != null;
+    if (isrequestOrDonation) {
+      Future<List<RequestCall>> records = requestOrDonation == 'request' ? profileRepo.fetchRequestCallsByCode(code) : donationRepo.fetchRequestCallsByCode(code, user.email);
+      records.then((users) {
         if ((users != null) && (users.isEmpty)) {
           _requestCall = RequestCall(
               userId: '',
@@ -388,6 +396,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
                                 backgroundColor: Colors.black54,
                                 textColor: Colors.white,
                                 fontSize: 16.0);
+                            Navigator.of(context).pop();
       });
     }
     }
@@ -532,7 +541,7 @@ Future<void> share(String title, String desc, String link, String amount) async 
     return Future.value(false);
   }
 
-Future<String> _asyncInputDialog(BuildContext context) async {
+Future<String> _asyncInputDialog(BuildContext context, String title) async {
   String email = '';
   return showDialog<String>(
     context: context,
@@ -546,7 +555,7 @@ Future<String> _asyncInputDialog(BuildContext context) async {
                 child: new TextField(
               autofocus: true,
               decoration: new InputDecoration(
-                  labelText: 'Friend email address', hintText: 'No email found in your contact. Please provide the same.'),
+                  labelText: 'Friend Email Address', hintText: 'No email found in your contact. Please provide the same.'),
               onChanged: (value) {
                 email = value;
               },
@@ -586,7 +595,7 @@ Future<String> _asyncInputDialog(BuildContext context) async {
               ),
             );
       break;
-      case 1:
+      case 2:
                       String amttext = '${_requestCall.currency} ${_requestCall.amount}';
                       if (_requestCall.mediaUrl != null) {
                       shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
@@ -595,7 +604,7 @@ Future<String> _asyncInputDialog(BuildContext context) async {
                       share(_requestCall.name, _requestCall.purpose, '', amttext);
                       }
       break;
-      case 2:
+      case 3:
       final perm = await checkAndRequestPermissionForContacts();
       if (perm) {
 
@@ -608,7 +617,7 @@ Future<String> _asyncInputDialog(BuildContext context) async {
                 // Get contacts matching a string
 Iterable<Contact> users = await ContactsService.getContacts(query : _contact.fullName);
 print('No. of matching contact found = ${users.length} for query = ${_contact.fullName}');
-users.forEach((c) async {
+users.take(1).forEach((c) async {
     String email = null;
     if (c.emails != null) {
       if (c.emails.isNotEmpty) {
@@ -616,19 +625,21 @@ users.forEach((c) async {
       }
     }
     if ((email == null) || (email.isEmpty)) {
-      final emailResult = await _asyncInputDialog(context);
+      final emailResult = await _asyncInputDialog(context, 'Found ${users.length} friends with matching name.');
       print(emailResult);
       email = _friendContactEmail;
     }
-                final request_json = {
-   'owner':{
+    final owner = {
       'name':user.displayName,
       'email':user.email
-   },
-   'donor':{
+   };
+   final donor = {
       'name':c.displayName,
       'email': email
-   },
+   };
+                final request_json = {
+   'owner':owner,
+   'donor': donor,
    'campaign':{
       'id': code,
       'url': HttpApi.BASE_API,
@@ -638,8 +649,40 @@ users.forEach((c) async {
       }
    }
 };
-        print('Request JSON = $request_json');
-        final r = await HttpApi.raiseCompaignRequestDonor(_requestCall.code, request_json);
+                      final yesno = await PlatformAlertDialog(
+                        title: 'Send Donation Request?',
+                        content:
+                            'You are asking ${c.displayName} for donation.',
+                        cancelActionText: Strings.cancel,
+                        defaultActionText: 'Send',
+                      ).show(context);
+                      if (yesno) {
+                        print('Request JSON = $request_json');
+                        RequestCall donation = _requestCall;
+                        donation.donor = donor;
+                        final bool status = await donationRepo.saveRequestCall(donation);
+                        if (status) {
+                        final r = await HttpApi.raiseCompaignRequestDonor(_requestCall.code, request_json);
+                            Fluttertoast.showToast(
+                                msg: 'Request Shared',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.green,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+                          };
+                        } else {
+
+                            Fluttertoast.showToast(
+                                msg: 'Donation Save Error',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.red,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+                      }
 });
               }
       } else {
@@ -680,7 +723,7 @@ users.forEach((c) async {
           backgroundColor: Colors.white,
           appBar: AppBar(
             title: Text(
-              'Raise A Request',
+              requestOrDonation == 'request' ? 'Raise A Request' : 'Donation Request',
               style: TextStyle(fontSize: 20, color: Colors.white),
             ),
             backgroundColor: Colors.blue,
@@ -903,7 +946,9 @@ users.forEach((c) async {
                             fontSize: 18),
                         //initialValue: fullname,
                       ),
+                      if (requestOrDonation != 'donation')
                       SizedBox(height: 10),
+                      if (requestOrDonation != 'donation')
                       TextFormField(
                         //readOnly: true,
                         //enabled: false,
@@ -934,7 +979,9 @@ users.forEach((c) async {
                             fontSize: 18),
                         //initialValue: email,
                       ),
+                      if (requestOrDonation != 'donation')
                       SizedBox(height: 10),
+                      if (requestOrDonation != 'donation')
                       TextFormField(
                         controller: _phoneNoController,
                         enabled: _saveEnabled,
@@ -1245,6 +1292,10 @@ users.forEach((c) async {
                         setState(() => _dialogState = DialogState.LOADING);
                         String identityType = _requestCall.identityType;
                         var uuid = Uuid();
+                        final owner = {
+                            'name':user.displayName,
+                            'email':user.email
+                        };
                         RequestCall data = RequestCall(
                           userId: user.uid,
                           code: code != null && code.isNotEmpty
@@ -1271,8 +1322,8 @@ users.forEach((c) async {
                           upiId: _upiIdController.text,
                           imageUrl: callbackCameraLink != null ? getImageFilename(File(callbackCameraLink)) : _requestCall.imageUrl,
                           mediaUrl: callbackVideoLink != null ? getImageFilename(File(callbackVideoLink)) : _requestCall.mediaUrl,
-                          status: 'Requested',
-
+                          status: 'Created',
+                          owner: owner
                         );
                         final String validationResult = data.validate();
                         bool status = validationResult == '';
@@ -1351,6 +1402,10 @@ users.forEach((c) async {
               icon: Icon(Icons.home),
               activeIcon: Icon(Icons.home),
               title: Text('Home'),
+            ),
+            BottomNavigationBarItem(
+              icon: Icon(Icons.payment),
+              title: Text('Pay'),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.share),

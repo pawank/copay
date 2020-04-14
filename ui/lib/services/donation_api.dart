@@ -1,12 +1,12 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
-class RequestCallApi {
-  static final String db_name = 'request_calls';
+class DonationApi {
+  static final String db_name = 'donations';
   final Firestore _db = Firestore.instance;
   final String path;
   CollectionReference ref;
 
-  RequestCallApi(this.path) {
+  DonationApi(this.path) {
     ref = _db.collection(path);
   }
 

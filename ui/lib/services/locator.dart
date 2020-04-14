@@ -1,3 +1,5 @@
+import 'package:copay/services/donation_api.dart';
+import 'package:copay/services/donation_api_impl.dart';
 import 'package:copay/services/enhanced_user_api.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/firebase_api.dart';
@@ -14,4 +16,6 @@ void setupLocator() {
   locator.registerLazySingleton(() => EnhancedProfileRepo());
   locator.registerLazySingleton(() => RequestCallApi('request_calls'));
   locator.registerLazySingleton(() => RequestCallRepo());
+  locator.registerLazySingleton(() => DonationApi('donations'));
+  locator.registerLazySingleton(() => DonationRepo());
 }

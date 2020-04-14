@@ -16,6 +16,12 @@ class CloudStoreConvertor {
   static RequestCall toObject(DocumentSnapshot doc) {
     try {
       final List<String> _tags = doc['tags'] != null ? List<String>.from(doc['tags']) : List<String>();
+      final Map<String, String> owner = doc['owner'] != null
+          ? Map<String, String>.from(doc['owner'])
+          : Map<String, String>();
+      final Map<String, String> donor = doc['donor'] != null
+          ? Map<String, String>.from(doc['donor'])
+          : Map<String, String>();
 
       return RequestCall(userId: getValue(doc, 'userId'),
           code: getValue(doc, 'code'),
@@ -40,7 +46,10 @@ class CloudStoreConvertor {
           feedback: getValue(doc, 'feedback'),
           upiId: getValue(doc, 'upiId'),
           website: getValue(doc, 'website'),
-          updatedOn: doc['updatedOn'] != null ? doc['updatedOn'] as Timestamp : Timestamp.now()
+          updatedOn: doc['updatedOn'] != null ? doc['updatedOn'] as Timestamp : Timestamp.now(),
+          requestedOn: doc['requestedOn'] != null ? doc['requestedOn'] as Timestamp : Timestamp.now(),
+          owner: owner,
+          donor: donor
           );
     
     } catch (e) {

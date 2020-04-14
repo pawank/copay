@@ -3,23 +3,23 @@ import 'package:copay/app/sign_in/sign_in_page.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/services/auth_service.dart';
-import 'package:copay/services/request_call_api.dart';
+import 'package:copay/services/donation_api.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/rendering.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:intl/intl.dart';
 
-class RequestCallScreen extends StatefulWidget {
-  RequestCallScreen({@required this.user, @required this.code});
+class DonationScreen extends StatefulWidget {
+  DonationScreen({@required this.user, @required this.code});
   final User user;
   final String code;
   @override
-  _RequestCallScreenState createState() => _RequestCallScreenState(user, code);
+  _DonationScreenState createState() => _DonationScreenState(user, code);
 }
 
-class _RequestCallScreenState extends State<RequestCallScreen> {
-  _RequestCallScreenState(this.user, this.code);
+class _DonationScreenState extends State<DonationScreen> {
+  _DonationScreenState(this.user, this.code);
   final User user;
   final String code;
   final int maxInfoLength = 30;
@@ -85,14 +85,14 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
   Widget build(BuildContext context) {
     final String username = user.email != null ? user.email : '';
     final streamQS = Firestore.instance
-        .collection(RequestCallApi.db_name)
-        .where('email', isEqualTo: username.toLowerCase())
+        .collection(DonationApi.db_name)
+        .where('donor.email', isEqualTo: username.toLowerCase())
         .snapshots();
     final _height = MediaQuery.of(context).size.height;
 
     return Scaffold(
       appBar: AppBar(
-        title: Text('My Requests'),
+        title: Text('Donation Requests'),
         centerTitle: true,
       ),
       body: 
@@ -118,7 +118,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                         Padding(
                           padding: EdgeInsets.all(10),
                           child: Text(
-                            'No request(s) saved by you.',
+                            'No Requested Donation(s) found for you.',
                             style: TextStyle(fontSize: 20),
                           ),
                         ),
@@ -188,7 +188,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                             imageUrl: getFinalUrl(obj.imageUrl),
                             mediaUrl: getFinalUrl(obj.mediaUrl),
                             user: user,
-                            requestOrDonation: 'request'
+                            requestOrDonation: 'donation'
                           );
                         } else {
                           return Text(

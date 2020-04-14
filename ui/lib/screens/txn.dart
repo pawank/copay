@@ -19,10 +19,12 @@ class RequestSummary extends StatelessWidget {
       this.receiver,
       this.imageUrl,
       this.mediaUrl,
-      this.user})
+      this.user,
+      this.requestOrDonation
+      })
       : super(key: key);
   final RequestSummaryType txnType;
-  final String code, amount, currency, info, date, receiver, imageUrl, mediaUrl;
+  final String code, amount, currency, info, date, receiver, imageUrl, mediaUrl, requestOrDonation;
   final User user;
   
   Widget getMediaIconType(String value) {
@@ -126,7 +128,7 @@ class RequestSummary extends StatelessWidget {
               context,
               MaterialPageRoute<void>(
                 builder: (context) {
-                  return RaiseRequest(user: user, code: code);
+                  return RaiseRequest(user: user, code: code, requestOrDonation: requestOrDonation);
                 },
               ),
             );
@@ -137,7 +139,7 @@ class RequestSummary extends StatelessWidget {
               context,
               MaterialPageRoute<void>(
                 builder: (context) {
-                  return RaiseRequest(user: user, code: code);
+                  return RaiseRequest(user: user, code: code, requestOrDonation: requestOrDonation);
                 },
               ),
             );
