@@ -125,13 +125,23 @@ class _CameraAppHomeState extends State<CameraAppHome>
           _toggleAudioWidget(),
           Padding(
             padding: const EdgeInsets.all(5.0),
-            child: Row(
+            child: 
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: <Widget>[
+                Padding(
+                  padding: EdgeInsets.only(left: 20),
+                  child: Text('Front and Rear Cameras'),
+                ),
+              
+            Row(
               mainAxisAlignment: MainAxisAlignment.start,
               children: <Widget>[
                 _cameraTogglesRowWidget(),
                 _thumbnailWidget(),
               ],
             ),
+            ],),
           ),
         ],
       ),
@@ -221,6 +231,7 @@ class _CameraAppHomeState extends State<CameraAppHome>
         IconButton(
           icon: const Icon(Icons.camera_alt),
           color: Colors.blue,
+          tooltip: 'Click to take Photo',
           onPressed: controller != null &&
                   controller.value.isInitialized &&
                   !controller.value.isRecordingVideo

@@ -947,6 +947,7 @@ users.take(1).forEach((c) async {
                         maxLines: null,
                         decoration: InputDecoration(
                           labelText: 'Call Reason',
+                          helperText: 'Your reason for starting the campaign',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -999,6 +1000,7 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Amount',
+                          helperText: 'Total amount to be raised in the campaign',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1022,7 +1024,8 @@ users.take(1).forEach((c) async {
                       ),
                       SizedBox(height: 10),
                       SwitchListTile(
-                          title: const Text('Individual or Org'),
+                          title: const Text('Individual \nor Org'),
+                          secondary: Text('Campaign is for?'),
                           value: _requestCall != null &&
                                   _requestCall.individual != null
                               ? _requestCall.individual
@@ -1040,6 +1043,7 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Person / Organization',
+                          helperText: 'The recipient full name',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1071,6 +1075,7 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Website / Org URL',
+                          helperText: 'Organization website URL for more info.',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1104,10 +1109,11 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Primary Email Address',
+                          helperText: 'The recipient email address (optional)',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: _emailController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
+                            borderSide: _emailController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.black),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -1135,6 +1141,7 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Contact Number',
+                          helperText: 'The recipient phone number',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1164,7 +1171,8 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         maxLines: null,
                         decoration: InputDecoration(
-                          labelText: 'Valid Full Address',
+                          labelText: 'Permanent Address',
+                          helperText: 'The recipient home address for correspondance',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1260,9 +1268,10 @@ users.take(1).forEach((c) async {
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
-                          labelText: 'UPI ID',
+                          labelText: 'Your UPI ID',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
+                          helperText: 'Payment will be done to the mentioned UPI handle.',
                           enabledBorder: UnderlineInputBorder(
                             borderSide: _upiIdController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.red),
                           ),
@@ -1290,6 +1299,7 @@ users.take(1).forEach((c) async {
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
                           labelText: 'Audio / Video Link',
+                          helperText: 'Use below camera icon for photo, audio or \nvideo upload for the campaign',
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
@@ -1322,7 +1332,7 @@ users.take(1).forEach((c) async {
                             fontSize: 18),
                         //initialValue: fullname,
                       ),
-                SizedBox(height: 5),
+                SizedBox(height: 10),
                 if (isShowAvatar)
                   feedbackurl != null ?
                   Avatar(
@@ -1349,6 +1359,7 @@ users.take(1).forEach((c) async {
                 children: <Widget>[
                 Text(
                   callbackCameraLink != null ? callbackVideoLink != null ? 'Saved Photo and Media' : 'Saved Photo': 'No Photo Found',
+                  semanticsLabel: 'Your uploaded media for the campaign',
                   style: TextStyle(
                       fontFamily: 'worksans',
                       fontSize: 20,
