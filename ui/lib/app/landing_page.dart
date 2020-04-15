@@ -7,6 +7,7 @@ import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
+import 'package:copay/services/request_call_api.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -99,37 +100,16 @@ class LandingPage extends StatelessWidget {
     if (user.displayName != null) {
       name = user.displayName;
     }
+    if (name != null) {
+      if (name.contains('@')) {
+        name = name.split('@').first;
+      }
+    }
     final String username = user.email != null ? user.email : '';
     final streamQS = Firestore.instance
-        .collection('request_calls')
-        .where('email', isEqualTo: username.toLowerCase())
+        .collection(RequestCallApi.db_name)
+        .where('owner.email', isEqualTo: username.toLowerCase())
         .snapshots();
-    final List<RequestSummary> txns = [
-      RequestSummary(
-        receiver: 'Pawan Kumar',
-        amount: '5000.00',
-        currency: '\$',
-        date: '4 April 2020',
-        info: 'Housemaid',
-        txnType: RequestSummaryType.sent,
-      ),
-      RequestSummary(
-        receiver: 'Nitish Jain',
-        amount: '15000.00',
-        currency: '',
-        date: '3 April 2020',
-        info: 'Gatekeeper',
-        txnType: RequestSummaryType.received,
-      ),
-      RequestSummary(
-        receiver: 'Alok Jain',
-        amount: '25000.00',
-        currency: '\$',
-        date: '30 March 2020',
-        info: 'Others',
-        txnType: RequestSummaryType.pending,
-      ),
-    ];
     return SafeArea(
       child: Scaffold(
         body: StreamBuilder<QuerySnapshot>(
@@ -176,12 +156,17 @@ class LandingPage extends StatelessWidget {
                                         crossAxisAlignment:
                                             CrossAxisAlignment.start,
                                         children: <Widget>[
+                                          Wrap(
+                                            alignment: WrapAlignment.spaceAround,
+                                            children: <Widget>[
                                           Text(
                                             'Hello $name,',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .title,
                                           ),
+
+                                          ],),
                                           Text(
                                             'What would you do like to do today ?',
                                             style: TextStyle(

@@ -515,7 +515,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
 Future<void> share(String title, String desc, String link, String amount) async {
     await FlutterShare.share(
       title: '[CoPay] Need Help For: $title',
-      text: 'Purpose: $desc\nDonation Request for: $amount',
+      text: 'Purpose: $desc\nDonation Request for: $amount\n\nRegards, CoPay',
       linkUrl: link,
       chooserTitle: title
     );
@@ -531,7 +531,7 @@ Future<void> share(String title, String desc, String link, String amount) async 
     );*/
     await FlutterShare.share(
       title: '[CoPay] Need Help For: $title',
-      text: 'Purpose: $desc\nDonation Request for: $amount',
+      text: 'Purpose: $desc\nDonation Request for: $amount\n\nRegards, CoPay',
       linkUrl: link,
       chooserTitle: title
     );
@@ -1455,6 +1455,7 @@ users.take(1).forEach((c) async {
                           amount: _amountController.numberValue,
                           currency: _amountController.leftSymbol,
                           profileUrl: getImageFilename(_image),
+                          website: _gstinController.text.toLowerCase(),
                           upiId: _upiIdController.text,
                           imageUrl: callbackCameraLink != null ? getImageFilename(File(callbackCameraLink)) : _requestCall.imageUrl,
                           mediaUrl: callbackVideoLink != null ? getImageFilename(File(callbackVideoLink)) : _requestCall.mediaUrl,

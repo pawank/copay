@@ -169,7 +169,7 @@ class _DonationScreenState extends State<DonationScreen> {
                           } else if ((obj.txnType == 'received') || (obj.status == 'Paid')) {
                             txnType = RequestSummaryType.received;
                           }
-                          else if ((obj.txnType == 'received') && (obj.status == 'Payment Failed')) {
+                          else if ((obj.txnType == 'failed') || (obj.status == 'Payment Failed')) {
                             txnType = RequestSummaryType.failed;
                           }
                           DateTime dt = obj.createdOn.toDate();
