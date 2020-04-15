@@ -51,7 +51,10 @@ class _UPIScreenState extends State<UPIScreen> {
     );
     */
     //return response;
-    final String response = await upi.startTransaction();
+    String response = await upi.startTransaction();
+    if (response != null) {
+      response = response + '&amount=' + request.amount.toString() + '&currency=' + request.currency;
+    }
     if ((response != null) && (response.contains('Status=FAILURE'))) {
                           Fluttertoast.showToast(
                               msg: 'Payment Status: FAILURE',
@@ -66,7 +69,17 @@ class _UPIScreenState extends State<UPIScreen> {
       setState(() {
         donation.status = 'Paid';
       });
+                          Fluttertoast.showToast(
+                              msg: 'Payment Status: SUCCESS',
+                              toastLength: Toast.LENGTH_LONG,
+                              gravity: ToastGravity.BOTTOM,
+                              timeInSecForIosWeb: 1,
+                              backgroundColor: Colors.green,
+                              textColor: Colors.white,
+                              fontSize: 16.0);
+                          Navigator.pop(context, response);
     }
+    //UPI_INDIA_FINAL_RESPONSE: txnId=SBI0c9a585cae4c4607b2519975899e87f9&responseCode=UP00&Status=SUCCESS&txnRef=TXNF0D21F8C7E15
     //return Future.value(response);
     return response;
   }

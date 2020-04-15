@@ -86,7 +86,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
     final String username = user.email != null ? user.email : '';
     final streamQS = Firestore.instance
         .collection(RequestCallApi.db_name)
-        .where('email', isEqualTo: username.toLowerCase())
+        .where('owner.email', isEqualTo: username.toLowerCase())
         .snapshots();
     final _height = MediaQuery.of(context).size.height;
 

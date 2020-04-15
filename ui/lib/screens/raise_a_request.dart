@@ -168,6 +168,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
     if ((user != null) && (user.email != null)) {
       email = user.email;
     }
+    if (_requestCall != null && _requestCall.email != null) {
+      email = _requestCall.email;
+    }
     //getRequestByCodeStream(code);
   }
 
@@ -301,7 +304,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
     });
     bool isrequestOrDonation = profileRepo != null && donationRepo != null;
     if (isrequestOrDonation) {
-      Future<List<RequestCall>> records = requestOrDonation == 'request' ? profileRepo.fetchRequestCallsByCode(code) : donationRepo.fetchRequestCallsByCode(code, user.email);
+      final Future<List<RequestCall>> records = requestOrDonation == 'request' ? profileRepo.fetchRequestCallsByCode(code) : donationRepo.fetchRequestCallsByCode(code, user.email);
       records.then((users) {
         if ((users != null) && (users.isEmpty)) {
           _requestCall = RequestCall(
@@ -333,6 +336,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
   _gstinController = TextEditingController(text: _requestCall.website);
   _upiIdController = TextEditingController(text: _requestCall.upiId);
   _medialController = TextEditingController(text: _requestCall.mediaUrl);
+      //email = requestOrDonation == 'request' ? _requestCall.owner['email'] : _requestCall.donor['email'];
+      email = _requestCall.email;
       currency = _requestCall.currency;
       _identityType = _requestCall.identityType;
       individual = _requestCall.individual;
@@ -586,15 +591,56 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
   );
 }
 
-bool isPaymentDone() {
+String getPaymentDone() {
+  String msg = 'Pay';
   bool status = false;
   if (_requestCall != null) {
     status = _requestCall.txnRef != null && _requestCall.txnRef.isNotEmpty && _requestCall.status == 'Paid';
   }
   if (!status) {
-    status = _upiResponse != null && _upiResponse.status == 'success' && _upiResponse.transactionId.isNotEmpty;
+    status = _upiResponse != null && _upiResponse.status.toLowerCase() == 'success' && _upiResponse.transactionId.isNotEmpty;
   }
-  return status;
+  if (status) {
+    msg = 'SUCCESS';
+  } else {
+    if (_requestCall != null) {
+      status = _requestCall.txnRef == null || _requestCall.txnRef.isEmpty || _requestCall.status == 'Payment Failed';
+      msg = 'FAILED';
+    }
+    if (!status) {
+      status = _upiResponse != null && _upiResponse.status.toLowerCase() == 'failure';
+      msg = 'FAILED';
+    } else {
+        msg = 'Pay';
+    }
+  }
+  return msg;
+}
+
+Future sendPaidEmailAndSMS(RequestCall call) async {
+    final requestJson = {
+   'owner': call.owner,
+   'donor': call.donor,
+   'currency': call.currency,
+   'amount': call.amount,
+   'campaign':{
+      'id': call.code,
+      'url': HttpApi.BASE_API,
+      'message':_requestCall.purpose,
+      'receiver':{
+         'name':_requestCall.name
+      }
+   }
+  };
+                        final r = await HttpApi.confimDonationPaid(call.code, requestJson);
+                            Fluttertoast.showToast(
+                                msg: 'Payment Confirmation Sent',
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.green,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
 }
 
 Future<String> callUpiPayment(UpiIndia upi) async {
@@ -608,19 +654,30 @@ Future<String> callUpiPayment(UpiIndia upi) async {
             ) as String;
             //print('Data found: $data');
             setState(() {
-              _upiResponse = UpiIndiaResponse(data);
+              if (data != null) {
+                _upiResponse = UpiIndiaResponse(data);
+              }
             });
+            bool isSuccess = false;
             if ((_requestCall != null) && (_upiResponse != null)) {
               if (_upiResponse.status == 'failure') {
+                _requestCall.txnType = 'failed';
                 _requestCall.status = 'Payment Failed';
               }
               if (_upiResponse.status == 'success') {
+                _requestCall.txnType = 'received';
                 _requestCall.status = 'Paid';
+                 isSuccess = false;
               }
                 _requestCall.txnRef = _upiResponse.transactionId;
+                _requestCall.paymentData = data;
                 _requestCall.paymentOn = Timestamp.now();
                 await donationRepo.saveRequestCall(_requestCall);
                 await profileRepo.saveRequestCall(_requestCall);
+                if (isSuccess) {
+                  //Send paid email and SMS
+                  await sendPaidEmailAndSMS(_requestCall);
+                }
             }
             return Future.value(data);
 }
@@ -643,7 +700,8 @@ Future<String> callUpiPayment(UpiIndia upi) async {
             );
       break;
       case 1:
-      if (isPaymentDone()) {
+      String paystatus = getPaymentDone();
+      if (paystatus == 'SUCCESS') {
         String msg = 'Paid ${_requestCall.currency} ${_requestCall.amount}';
         if (_requestCall.paymentOn != null) {
                           DateTime dt = _requestCall.paymentOn.toDate();
@@ -734,6 +792,8 @@ users.take(1).forEach((c) async {
                       if (yesno) {
                         print('Request JSON = $request_json');
                         RequestCall donation = _requestCall;
+                        donation.requestedOn = Timestamp.now();
+                        donation.status = 'Created';
                         donation.donor = donor;
                         final bool status = await donationRepo.saveRequestCall(donation);
                         if (status) {
@@ -786,6 +846,7 @@ users.take(1).forEach((c) async {
         (user != null) && ((user.photoUrl != null) || (_profileUrl != null) || (callbackCameraLink != null));
       
     String feedbackurl = getFeedbackImage();
+    String paystatus = getPaymentDone();
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
@@ -1381,7 +1442,7 @@ users.take(1).forEach((c) async {
                                   .reversed
                                   .first
                                   .toUpperCase(),
-                          email: user.email,
+                          email: _emailController.text.trim().toLowerCase(),
                           purpose: _titleController.text,
                           name: _fullnameController.text,
                           mobile: _phoneNoController.text,
@@ -1481,8 +1542,8 @@ users.take(1).forEach((c) async {
               title: Text('Home'),
             ),
             BottomNavigationBarItem(
-              icon: _upiResponse == null ? !isPaymentDone() ? Icon(Icons.payment) : Icon(Icons.done_all) : Icon(Icons.error),
-              title: Text(isPaymentDone() ? 'Paid' : 'Pay'),
+              icon: _upiResponse == null ? paystatus != 'SUCCESS' ? Icon(Icons.payment) : Icon(Icons.done_all) : paystatus == 'FAILED' ? Icon(Icons.error) : Icon(Icons.payment),
+              title: Text(paystatus == 'SUCCESS' ? 'Paid' : 'Pay'),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.share),

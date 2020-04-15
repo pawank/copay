@@ -21,6 +21,7 @@ class RequestCall extends ChangeNotifier {
   String currency;
   String txnRef;
   String txnType;
+  String paymentData;
   String status;
   String feedback;
   String imageUrl;
@@ -52,6 +53,7 @@ class RequestCall extends ChangeNotifier {
       @required this.currency,
       this.txnRef,
       this.txnType,
+      this.paymentData,
       @required this.status,
       this.feedback,
       this.imageUrl,
@@ -95,10 +97,11 @@ class RequestCall extends ChangeNotifier {
         individual = snapshot['individual'] ?? false,
         website = snapshot['website'] ?? '',
         upiId = snapshot['upiId'] ?? '',
-        amount = snapshot['amount'] ?? 0.00,
+        amount = snapshot['amount'].toDouble() ?? 0.00,
         currency = snapshot['currency'] ?? '',
         txnRef = snapshot['txnRef'] ?? '',
         txnType = snapshot['txnType'] ?? '',
+        paymentData = snapshot['paymentData'] ?? '',
         status = snapshot['status'] ?? '',
         feedback = snapshot['feedback'] ?? '',
         imageUrl = snapshot['imageUrl'] ?? '',
@@ -136,6 +139,7 @@ class RequestCall extends ChangeNotifier {
       'currency': currency,
       'txnRef': txnRef,
       'txnType': txnType,
+      'paymentData': paymentData,
       'status': status,
       'feedback': feedback,
       'imageUrl': imageUrl,
