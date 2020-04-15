@@ -71,6 +71,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   final String callbackVideo;
   final String requestOrDonation;
   bool _isLoading = true;
+  String _loadingMessage = 'Loading...';
   RequestCallRepo profileRepo;
   DonationRepo donationRepo;
   bool _saveEnabled = true;
@@ -790,6 +791,10 @@ users.take(1).forEach((c) async {
                         defaultActionText: 'Send',
                       ).show(context);
                       if (yesno) {
+                        setState(() {
+                          _loadingMessage = 'Send Donation Request. Please wait...';
+                          _isLoading = true;
+                        });
                         print('Request JSON = $request_json');
                         RequestCall donation = _requestCall;
                         donation.requestedOn = Timestamp.now();
@@ -818,6 +823,10 @@ users.take(1).forEach((c) async {
                                 textColor: Colors.white,
                                 fontSize: 16.0);
                       }
+                        setState(() {
+                          _loadingMessage = 'Loading...';
+                          _isLoading = false;
+                        });
 });
               }
       } else {
@@ -903,7 +912,7 @@ users.take(1).forEach((c) async {
                         obj = CloudStoreConvertor.toObject(document);
                 });
           return*/ 
-          _isLoading == true ? Center(child: Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),),) :
+          _isLoading == true ? Center(child: Text(_loadingMessage, style: TextStyle(fontSize: 20, color: Colors.blue),),) :
           SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,

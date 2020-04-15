@@ -29,6 +29,7 @@ class _UPIScreenState extends State<UPIScreen> {
   Future<List<ApplicationMeta>> _appsFuture;
   bool _isUpiEditable = false;
   bool _isAmountEditable = false;
+  bool _isLoading = true;
 
   Future<String> initiateTransaction(String app) async {
     UpiIndia upi = UpiIndia(
@@ -91,6 +92,9 @@ class _UPIScreenState extends State<UPIScreen> {
     _upiAddressController.text = request.receiverUpiId;
     _amountController.text = (request.amount).toStringAsFixed(2);
     _appsFuture = UpiPay.getInstalledUpiApplications();
+    setState(() {
+      _isLoading = false;
+    });
   }
 
   @override
@@ -107,7 +111,8 @@ class _UPIScreenState extends State<UPIScreen> {
       appBar: AppBar(
         title: Text('UPI Payment'),
       ),
-      body: Column(
+      body: _isLoading == true ? Center(child: CircularProgressIndicator(),) :
+      Column(
         children: <Widget>[
           Expanded(
             flex: 3,
