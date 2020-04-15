@@ -1,6 +1,7 @@
 import 'dart:io';
 
 import 'package:copay/common_widgets/avatar.dart';
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/constants/keys.dart';
 import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
@@ -43,6 +44,7 @@ class _UserProfileState extends State<UserProfile> {
   TextEditingController _emailController = TextEditingController(text: '');
   File _image;
   String _profileUrl;
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -141,6 +143,10 @@ class _UserProfileState extends State<UserProfile> {
               _emailController.text = u.email;
             }
           });
+        });
+
+        setState(() {
+          _isLoading = false;
         });
       });
     } else {
@@ -277,7 +283,8 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ],
           ),
-          body: SingleChildScrollView(
+          body: _isLoading == true ? LoadingScreen() :
+          SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,

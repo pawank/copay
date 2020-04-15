@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/app/sign_in/sign_in_page.dart';
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/services/auth_service.dart';
@@ -103,7 +104,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.waiting:
-                return Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),);
+                return LoadingScreen();
               default:
                 child:
                 final List<DocumentSnapshot> docs = snapshot.data.documents;
@@ -194,7 +195,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                       }).toList();
                   return Container(
                     //height: _height * 0.8,
-                    child: recordsOfCalls.isEmpty ? CircularProgressIndicator() : ListView(
+                    child: recordsOfCalls.isEmpty ? LoadingScreen() : ListView(
                       controller: _scrollBottomBarController,
                       children: recordsOfCalls,
                     ),

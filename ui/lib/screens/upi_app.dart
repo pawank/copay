@@ -1,5 +1,6 @@
 import 'dart:typed_data';
 
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:flutter/material.dart';
 import 'package:fluttertoast/fluttertoast.dart';
@@ -111,7 +112,7 @@ class _UPIScreenState extends State<UPIScreen> {
       appBar: AppBar(
         title: Text('UPI Payment'),
       ),
-      body: _isLoading == true ? Center(child: CircularProgressIndicator(),) :
+      body: _isLoading == true ? LoadingScreen() :
       Column(
         children: <Widget>[
           Expanded(

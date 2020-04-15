@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/app/sign_in/sign_in_page.dart';
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/services/auth_service.dart';
@@ -103,11 +104,11 @@ class _DonationScreenState extends State<DonationScreen> {
             if (snapshot.hasError) return Text('Error: ${snapshot.error}');
             switch (snapshot.connectionState) {
               case ConnectionState.waiting:
-                return Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),);
+                return LoadingScreen();
               default:
                 child:
                 final List<DocumentSnapshot> docs = snapshot.data.documents;
-                print('Doc size for request calls = ${docs.length}');
+                //print('Doc size for request calls = ${docs.length}');
                 final docsSize = docs.length;
                 if (docsSize <= 0) {
                   return Container(

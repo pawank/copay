@@ -1,5 +1,6 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/screens/contacts.dart';
 import 'package:copay/screens/donations.dart';
 import 'package:copay/screens/raise_a_request.dart';
@@ -142,7 +143,7 @@ class LandingPage extends StatelessWidget {
               switch (snapshot.connectionState) {
                 case ConnectionState.waiting:
                   return Center(
-                    child: Text('Loading..', style: TextStyle(fontSize: 20),),
+                    child: LoadingScreen(),
                   );
                 default:
                   child:

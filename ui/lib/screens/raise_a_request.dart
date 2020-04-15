@@ -8,6 +8,7 @@ import 'package:contact_picker/contact_picker.dart' as contact_select;
 import 'package:contacts_service/contacts_service.dart';
 import 'package:copay/app/landing_page.dart';
 import 'package:copay/common_widgets/avatar.dart';
+import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/common_widgets/video_player_app.dart';
 import 'package:copay/constants/keys.dart';
 import 'package:copay/models/cloud_store_convertor.dart';
@@ -792,7 +793,7 @@ users.take(1).forEach((c) async {
                       ).show(context);
                       if (yesno) {
                         setState(() {
-                          _loadingMessage = 'Send Donation Request. Please wait...';
+                          _loadingMessage = 'Sending Donation Request.\nPlease wait...';
                           _isLoading = true;
                         });
                         print('Request JSON = $request_json');
@@ -912,7 +913,7 @@ users.take(1).forEach((c) async {
                         obj = CloudStoreConvertor.toObject(document);
                 });
           return*/ 
-          _isLoading == true ? Center(child: Text(_loadingMessage, style: TextStyle(fontSize: 20, color: Colors.blue),),) :
+          _isLoading == true ? LoadingScreen(message: _loadingMessage,) :
           SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -1284,7 +1285,7 @@ users.take(1).forEach((c) async {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _medialController,
-                        enabled: _saveEnabled,
+                        //enabled: _saveEnabled,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
