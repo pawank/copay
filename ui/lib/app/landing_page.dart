@@ -43,10 +43,25 @@ class LandingPage extends StatelessWidget {
 
   Widget _buildUserInfo(BuildContext context, User user) {
     String name = null;
-    if ((user.email != null) && (user.displayName == null)) {
-      name = user.email.toUpperCase().substring(0, 2);
-    } else if (user.displayName != null) {
-      name = user.displayName.toUpperCase().substring(0, 2);
+    if ((user.email != null) && ((user.displayName == null) || (user.displayName == ''))) {
+      if (user.email.length > 2) {
+          name = user.email.toUpperCase().substring(0, 2);
+      }
+    } 
+    if (user.displayName != null) {
+      if (user.displayName.length > 2) {
+        name = user.displayName.toUpperCase().substring(0, 2);
+        //name = user.displayName;
+      } else {
+
+      }
+    }
+    String fullname = user.displayName;
+    if ((fullname == null) || (fullname == '')) {
+      fullname = user.email;
+      if (fullname != null) {
+        fullname = user.email.split('@').first;
+      }
     }
     String url = '';
     if (user.photoUrl != null) {
@@ -105,6 +120,13 @@ class LandingPage extends StatelessWidget {
         name = name.split('@').first;
       }
     }
+    String fullname = user.displayName;
+    if ((fullname == null) || (fullname == '')) {
+      fullname = user.email;
+      if (fullname != null) {
+        fullname = user.email.split('@').first;
+      }
+     }
     final String username = user.email != null ? user.email : '';
     final streamQS = Firestore.instance
         .collection(RequestCallApi.db_name)
@@ -123,7 +145,7 @@ class LandingPage extends StatelessWidget {
                 default:
                   child:
                   final List<DocumentSnapshot> docs = snapshot.data.documents;
-                  print('Doc size = ${docs.length}');
+                  //print('Doc size = ${docs.length}');
                   double totalPaid = 0.00;
                   double totalReceived = 0.00;
                   String lastDate = '';
@@ -160,7 +182,7 @@ class LandingPage extends StatelessWidget {
                                             alignment: WrapAlignment.spaceAround,
                                             children: <Widget>[
                                           Text(
-                                            'Hello $name,',
+                                            'Hello $fullname,',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .title,

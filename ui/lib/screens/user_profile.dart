@@ -241,6 +241,8 @@ class _UserProfileState extends State<UserProfile> {
       fullname = user.displayName;
     }
     if (_enhancedProfile != null) {
+      fullname = _enhancedProfile.name != null && _enhancedProfile.name != '' ? _enhancedProfile.name : fullname;
+      nameOfPerson = 'Hello, ${fullname}';
       phoneno = _enhancedProfile.mobile;
       if (phoneno == null) {
         phoneno = '';
@@ -510,6 +512,7 @@ class _UserProfileState extends State<UserProfile> {
                       if (yesno == true) {
                         EnhancedProfile data = EnhancedProfile(
                             userId: user.uid,
+                            name: _fullnameController.text.trim(),
                             email: user.email,
                             mobile: _phoneNoController.text,
                             address: _addressController.text,
