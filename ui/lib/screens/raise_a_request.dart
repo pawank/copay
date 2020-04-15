@@ -1485,6 +1485,8 @@ users.take(1).forEach((c) async {
                       if (yesno == true) {
                       setState(() {
                         _saveEnabled = false;
+                        _loadingMessage = 'Uploading photos, media and request. Please wait...';
+                        _isLoading = true;
                       });
                       
                         await uploadPic(callbackCameraLink, false);
@@ -1518,6 +1520,11 @@ users.take(1).forEach((c) async {
                                 textColor: Colors.white,
                                 fontSize: 16.0);
                           }
+
+                          setState(() {
+                            _loadingMessage = 'Loading...';
+                            _isLoading = false;
+                          });
                       }
                         } else {
                           Fluttertoast.showToast(
