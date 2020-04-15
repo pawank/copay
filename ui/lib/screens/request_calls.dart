@@ -107,7 +107,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
               default:
                 child:
                 final List<DocumentSnapshot> docs = snapshot.data.documents;
-                print('Doc size for request calls = ${docs.length}');
+                //print('Doc size for request calls = ${docs.length}');
                 final docsSize = docs.length;
                 if (docsSize <= 0) {
                   return Container(
@@ -155,12 +155,7 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                     ),
                   );
                 } else {
-                  return Container(
-                    //height: _height * 0.8,
-                    child: ListView(
-                      controller: _scrollBottomBarController,
-                      children: 
-                      docs.map((DocumentSnapshot document) {
+                      final recordsOfCalls = docs.map((DocumentSnapshot document) {
                         final RequestCall obj = CloudStoreConvertor.toObject(document);
                         if (obj != null) {
                           var txnType = RequestSummaryType.pending; 
@@ -196,7 +191,12 @@ class _RequestCallScreenState extends State<RequestCallScreen> {
                           return Text(
                               'Request cannot be displayed for reference no: ${document.documentID}');
                         }
-                      }).toList(),
+                      }).toList();
+                  return Container(
+                    //height: _height * 0.8,
+                    child: recordsOfCalls.isEmpty ? CircularProgressIndicator() : ListView(
+                      controller: _scrollBottomBarController,
+                      children: recordsOfCalls,
                     ),
                   );
                 }

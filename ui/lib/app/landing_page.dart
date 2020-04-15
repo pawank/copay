@@ -141,7 +141,9 @@ class LandingPage extends StatelessWidget {
               if (snapshot.hasError) return Text('Error: ${snapshot.error}');
               switch (snapshot.connectionState) {
                 case ConnectionState.waiting:
-                  return Text('Loading..');
+                  return Center(
+                    child: Text('Loading..', style: TextStyle(fontSize: 20),),
+                  );
                 default:
                   child:
                   final List<DocumentSnapshot> docs = snapshot.data.documents;
@@ -149,7 +151,9 @@ class LandingPage extends StatelessWidget {
                   double totalPaid = 0.00;
                   double totalReceived = 0.00;
                   String lastDate = '';
+                  String ownerName = null;
                   docs.forEach((doc){
+                    ownerName = doc['owner']['name'];
                     totalPaid += doc['amount'];
                     if ((doc['txnType'] != null) && (doc['txnType'] == 'received')) {
                       totalReceived += doc['amount'];
@@ -182,7 +186,7 @@ class LandingPage extends StatelessWidget {
                                             alignment: WrapAlignment.spaceAround,
                                             children: <Widget>[
                                           Text(
-                                            'Hello $fullname,',
+                                            ownerName != null ? 'Hello $ownerName,' : 'Hello $fullname,',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .title,

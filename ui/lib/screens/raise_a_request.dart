@@ -347,12 +347,12 @@ class _RaiseRequestState extends State<RaiseRequest> {
       amount = _requestCall.amount;
       _amountController.updateValue(amount);
       _saveEnabled = code == null || (code != null && code.isEmpty);
-      _isLoading = false;
+      //_isLoading = false;
           });
         });
-      });
       setState(() {
-      _isLoading = false;
+        _isLoading = false;
+      });
       });
     } else {
       if ((user != null) && (user.displayName != null)) {
@@ -903,7 +903,7 @@ users.take(1).forEach((c) async {
                         obj = CloudStoreConvertor.toObject(document);
                 });
           return*/ 
-          _isLoading == true ? Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),) :
+          _isLoading == true ? Center(child: Text('Loading...', style: TextStyle(fontSize: 20, color: Colors.blue),),) :
           SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -1534,8 +1534,11 @@ users.take(1).forEach((c) async {
         bottomNavigationBar: 
         _saveEnabled == false ?
         BottomNavigationBar(
-          unselectedItemColor: Theme.of(context).primaryColor,
-          selectedItemColor: Theme.of(context).primaryColor,
+          type: BottomNavigationBarType.fixed,
+          unselectedItemColor: Colors.blue,
+          selectedItemColor: Theme.of(context).primaryColorDark,
+          //unselectedItemColor: Theme.of(context).primaryColor,
+          //selectedItemColor: Theme.of(context).primaryColorDark,
           items: [
             BottomNavigationBarItem(
               icon: Icon(Icons.home),
@@ -1548,11 +1551,13 @@ users.take(1).forEach((c) async {
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.share),
+              activeIcon: Icon(Icons.share),
               title: Text('Share'),
             ),
             BottomNavigationBarItem(
               icon: Icon(Icons.send),
-              title: Text('Request Contact'),
+              activeIcon: Icon(Icons.send),
+              title: Text('Request'),
             ),
           ],
           currentIndex: _selectedIndex,
