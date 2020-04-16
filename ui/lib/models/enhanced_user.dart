@@ -14,6 +14,10 @@ class EnhancedProfile {
   String profileUrl;
   bool newsletter;
   String subscribeEmail;
+  double totalRaised;
+  double totalDonated;
+  int raisedCount;
+  int donatedCount;
 
   EnhancedProfile(
       {@required this.userId,
@@ -27,7 +31,12 @@ class EnhancedProfile {
       this.dob,
       this.profileUrl,
       this.newsletter,
-      this.subscribeEmail});
+      this.subscribeEmail,
+      this.totalRaised,
+      this.totalDonated,
+      this.raisedCount,
+      this.donatedCount
+      });
 
   EnhancedProfile.fromMap(Map snapshot, String id)
       : userId = id ?? '',
@@ -43,7 +52,11 @@ class EnhancedProfile {
             : null,
         profileUrl = snapshot['profileUrl'] ?? '',
         newsletter = snapshot['newsletter'] ?? false,
-        subscribeEmail = snapshot['subscribeEmail'] ?? '';
+        subscribeEmail = snapshot['subscribeEmail'] ?? '',
+        totalRaised = snapshot['totalRaised'] ?? 0.00,
+        totalDonated = snapshot['totalDonated'] ?? 0.00,
+        raisedCount = snapshot['raisedCount'] ?? 0,
+        donatedCount = snapshot['donatedCount'] ?? 0;
 
   dynamic toJson() {
     return {
@@ -58,7 +71,11 @@ class EnhancedProfile {
       'dob': Timestamp.now(),
       'profileUrl': profileUrl,
       'newsletter': newsletter,
-      'subscribeEmail': subscribeEmail
+      'subscribeEmail': subscribeEmail,
+      'totalRaised':totalRaised,
+      'totalDonated':totalDonated,
+      'raisedCount': raisedCount,
+      'donatedCount': donatedCount
     };
   }
 }

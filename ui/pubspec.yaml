@@ -56,6 +56,7 @@ dependencies:
   contact_picker: 0.0.2
   upi_india: 1.1.2
   upi_pay: 0.2.1
+  loader: 0.4.0
   flutter:
     sdk: flutter
 

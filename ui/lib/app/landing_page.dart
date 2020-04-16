@@ -1,6 +1,8 @@
 import 'package:circular_profile_avatar/circular_profile_avatar.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:copay/common_widgets/loading.dart';
+import 'package:copay/common_widgets/stateful_wrapper.dart';
+import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/screens/contacts.dart';
 import 'package:copay/screens/donations.dart';
 import 'package:copay/screens/raise_a_request.dart';
@@ -8,9 +10,11 @@ import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
+import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_api.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:loader/loader.dart';
 import 'package:provider/provider.dart';
 
 enum ButtonType { payBills, donate, receiptients, offers }
@@ -39,23 +43,27 @@ class MyApp extends StatelessWidget {
 }
 */
 class LandingPage extends StatelessWidget {
-  final String title;
   LandingPage({this.title});
+
+  final String title;
+  AsyncSnapshot<User> userSnapshot;
+
+  EnhancedProfile _profile;
+  User _user;
 
   Widget _buildUserInfo(BuildContext context, User user) {
     String name = null;
-    if ((user.email != null) && ((user.displayName == null) || (user.displayName == ''))) {
+    if ((user.email != null) &&
+        ((user.displayName == null) || (user.displayName == ''))) {
       if (user.email.length > 2) {
-          name = user.email.toUpperCase().substring(0, 2);
+        name = user.email.toUpperCase().substring(0, 2);
       }
-    } 
+    }
     if (user.displayName != null) {
       if (user.displayName.length > 2) {
         name = user.displayName.toUpperCase().substring(0, 2);
         //name = user.displayName;
-      } else {
-
-      }
+      } else {}
     }
     String fullname = user.displayName;
     if ((fullname == null) || (fullname == '')) {
@@ -109,9 +117,12 @@ class LandingPage extends StatelessWidget {
     );
   }
 
-  @override
-  Widget build(BuildContext context) {
-    final user = Provider.of<User>(context, listen: false);
+  Future _getThingsOnStartup() async {
+    await Future<dynamic>.delayed(Duration(seconds: 2));
+  }
+
+  Widget generateUI(BuildContext context, User user, EnhancedProfile profile) {
+    //final userProfile = Provider.of<EnhancedProfile>(context, listen: false);
     String name = user.email;
     if (user.displayName != null) {
       name = user.displayName;
@@ -127,187 +138,219 @@ class LandingPage extends StatelessWidget {
       if (fullname != null) {
         fullname = user.email.split('@').first;
       }
-     }
+    }
     final String username = user.email != null ? user.email : '';
     final streamQS = Firestore.instance
         .collection(RequestCallApi.db_name)
         .where('owner.email', isEqualTo: username.toLowerCase())
         .snapshots();
-    return SafeArea(
-      child: Scaffold(
-        body: StreamBuilder<QuerySnapshot>(
-            stream: streamQS,
-            builder:
-                (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
-              if (snapshot.hasError) return Text('Error: ${snapshot.error}');
-              switch (snapshot.connectionState) {
-                case ConnectionState.waiting:
-                  return Center(
-                    child: LoadingScreen(),
-                  );
-                default:
-                  child:
-                  final List<DocumentSnapshot> docs = snapshot.data.documents;
-                  //print('Doc size = ${docs.length}');
-                  double totalPaid = 0.00;
-                  double totalReceived = 0.00;
-                  String lastDate = '';
-                  String ownerName = null;
-                  docs.forEach((doc){
-                    ownerName = doc['owner']['name'];
-                    totalPaid += doc['amount'];
-                    if ((doc['txnType'] != null) && (doc['txnType'] == 'received')) {
-                      totalReceived += doc['amount'];
-                    } else if ((doc['status'] != null) && (doc['status'] == 'Paid')) {
-                      totalReceived += doc['amount'];
-                    }
-                          DateTime dt = (doc['createdOn'] as Timestamp).toDate();
-                          lastDate = 'Till ' + new DateFormat.yMMMMd('en_US').format(dt);
-                  });
-                  return Column(
-                    children: <Widget>[
-                      SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: <Widget>[
-                            Container(
-                              padding: EdgeInsets.all(21),
-                              color: Theme.of(context).primaryColor,
-                              child: Column(
+    return StreamBuilder<QuerySnapshot>(
+        stream: streamQS,
+        builder: (BuildContext context, AsyncSnapshot<QuerySnapshot> snapshot) {
+          if (snapshot.hasError) return Text('Error: ${snapshot.error}');
+          switch (snapshot.connectionState) {
+            case ConnectionState.waiting:
+              return Center(
+                child: LoadingScreen(),
+              );
+            default:
+              child:
+              //print('Doc size = ${docs.length}');
+              double totalPaid = 0.00;
+              double totalReceived = 0.00;
+              double totalShare = 0.00;
+              String lastDate = '';
+              String ownerName = null;
+              snapshot.data.documents.forEach((doc) {
+                ownerName = doc['owner']['name'];
+                totalPaid += doc['amount'];
+                if ((doc['txnType'] != null) &&
+                    (doc['txnType'] == 'received')) {
+                  totalReceived += doc['amount'];
+                } else if ((doc['status'] != null) &&
+                    (doc['status'] == 'Paid')) {
+                  totalReceived += doc['amount'];
+                }
+                DateTime dt = (doc['createdOn'] as Timestamp).toDate();
+                lastDate = 'Till ' + new DateFormat.yMMMMd('en_US').format(dt);
+              });
+              return Column(
+                children: <Widget>[
+                  SingleChildScrollView(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: <Widget>[
+                        Container(
+                          padding: EdgeInsets.all(21),
+                          color: Theme.of(context).primaryColor,
+                          child: Column(
+                            children: <Widget>[
+                              Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
                                 children: <Widget>[
-                                  Row(
-                                    mainAxisAlignment:
-                                        MainAxisAlignment.spaceBetween,
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.start,
                                     children: <Widget>[
-                                      Column(
-                                        crossAxisAlignment:
-                                            CrossAxisAlignment.start,
+                                      Wrap(
+                                        alignment: WrapAlignment.spaceAround,
                                         children: <Widget>[
-                                          Wrap(
-                                            alignment: WrapAlignment.spaceAround,
-                                            children: <Widget>[
                                           Text(
-                                            ownerName != null ? 'Hello $ownerName,' : 'Hello $fullname,',
+                                            ownerName != null
+                                                ? 'Hello $ownerName,'
+                                                : 'Hello $fullname,',
                                             style: Theme.of(context)
                                                 .textTheme
                                                 .title,
                                           ),
-
-                                          ],),
-                                          Text(
-                                            'What would you do like to do today ?',
-                                            style: TextStyle(
-                                                color: Colors.white70),
-                                          ),
                                         ],
                                       ),
-                                      Container(
-                                        decoration: BoxDecoration(
-                                          boxShadow: [
-                                            BoxShadow(
-                                              color: Colors.black45,
-                                              blurRadius: 5.0,
-                                              offset: Offset(0, 3),
-                                            ),
-                                          ],
-                                          shape: BoxShape.circle,
-                                          color: Colors.transparent,
+                                      Text(
+                                        'What would you do like to do today ?',
+                                        style: TextStyle(color: Colors.white70),
+                                      ),
+                                    ],
+                                  ),
+                                  Container(
+                                    decoration: BoxDecoration(
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: Colors.black45,
+                                          blurRadius: 5.0,
+                                          offset: Offset(0, 3),
                                         ),
-                                        child: _buildUserInfo(context, user),
-                                        /*
+                                      ],
+                                      shape: BoxShape.circle,
+                                      color: Colors.transparent,
+                                    ),
+                                    child: _buildUserInfo(context, user),
+                                    /*
                                 CircleAvatar(
                                 backgroundImage: NetworkImage(
                                   avatarUrl
                                 ),
                               ),*/
-                                      )
-                                    ],
-                                  ),
-                                  SizedBox(
-                                    height: 15.0,
-                                  ),
-                                  //SendReceiveSwitch(),
+                                  )
                                 ],
                               ),
-                            ),
-                            Container(
-                              padding: EdgeInsets.all(11),
-                              color: Color(0xfff4f5f9),
-                              child: Row(
-                                mainAxisAlignment:
-                                    MainAxisAlignment.spaceEvenly,
-                                children: <Widget>[
-                                  Flexible(
-                                    child: CustomButton(
-                                        buttonType: ButtonType.payBills,
-                                        user: user),
-                                  ),
-                                  Flexible(
-                                    child: CustomButton(
-                                        buttonType: ButtonType.receiptients,
-                                        user: user),
-                                  ),
-                                  Flexible(
-                                    child: CustomButton(
-                                        buttonType: ButtonType.donate,
-                                        user: user),
-                                  ),
-                                  /*
-                        Flexible(
-                          child: CustomButton(buttonType: ButtonType.offers),
-                        ),*/
-                                ],
+                              SizedBox(
+                                height: 15.0,
                               ),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Expanded(
-                        child: Container(
-                          padding: EdgeInsets.all(21.0),
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            mainAxisSize: MainAxisSize.max,
-                            children: <Widget>[
-                              Text(
-                                'SCORE BOARD',
-                                style: TextStyle(
-                                  color: Theme.of(context).primaryColor,
-                                  fontSize: 15.0,
-                                ),
-                              ),
-                              Expanded(
-                                child: ListView(
-                                  children: [
-                                    Card(child: ListTile(key: Key('1'),
-                                    leading: Text(totalPaid.toInt().toString(), style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),),
-                                      title: Text('TOTAL RAISED'),
-                                      subtitle: Text(lastDate),
-                                      isThreeLine: false,
-                                      trailing: Icon(Icons.arrow_upward),
-                                      ),
-                                    ),
-                                      Divider(height: 5,),
-                                    Card(child: ListTile(key: Key('2'),
-                                    leading: Text(totalReceived.toInt().toString(), style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),),
-                                      title: Text('TOTAL RECEIVED'),
-                                      subtitle: Text(lastDate),
-                                      isThreeLine: true,
-                                      trailing: Icon(Icons.arrow_downward),
-                                      ),
-                                    ),
-    ],
-                                ),
-                              ),
+                              //SendReceiveSwitch(),
                             ],
                           ),
                         ),
+                        Container(
+                          padding: EdgeInsets.all(11),
+                          color: Color(0xfff4f5f9),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                            children: <Widget>[
+                              Flexible(
+                                child: CustomButton(
+                                    buttonType: ButtonType.payBills,
+                                    user: user),
+                              ),
+                              Flexible(
+                                child: CustomButton(
+                                    buttonType: ButtonType.receiptients,
+                                    user: user),
+                              ),
+                              Flexible(
+                                child: CustomButton(
+                                    buttonType: ButtonType.donate, user: user),
+                              ),
+                              /*
+                        Flexible(
+                          child: CustomButton(buttonType: ButtonType.offers),
+                        ),*/
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Container(
+                      padding: EdgeInsets.all(21.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisSize: MainAxisSize.max,
+                        children: <Widget>[
+                          Text(
+                            'SCORE BOARD',
+                            style: TextStyle(
+                              color: Theme.of(context).primaryColor,
+                              fontSize: 15.0,
+                            ),
+                          ),
+                          Expanded(
+                            child: ListView(
+                              children: [
+                                Card(
+                                  child: ListTile(
+                                    key: Key('1'),
+                                    leading: Text(
+                                      totalPaid.toInt().toString(),
+                                      style: TextStyle(
+                                          color: Colors.blue,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    title: Text('TOTAL RAISED'),
+                                    subtitle: Text(lastDate),
+                                    isThreeLine: false,
+                                    trailing: Icon(Icons.arrow_upward),
+                                  ),
+                                ),
+                                Divider(
+                                  height: 5,
+                                ),
+                                Card(
+                                  child: ListTile(
+                                    key: Key('2'),
+                                    leading: Text(
+                                      totalReceived.toInt().toString(),
+                                      style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    title: Text('TOTAL RECEIVED'),
+                                    subtitle: Text(lastDate),
+                                    isThreeLine: true,
+                                    trailing: Icon(Icons.arrow_downward),
+                                  ),
+                                ),
+                                Divider(
+                                  height: 5,
+                                ),
+                                Card(
+                                  child: ListTile(
+                                    key: Key('3'),
+                                    leading: Text(
+                                      totalShare.toInt().toString(),
+                                      style: TextStyle(
+                                          color: Colors.green,
+                                          fontWeight: FontWeight.bold),
+                                    ),
+                                    title: Text('TOTAL YOUR SHARE'),
+                                    subtitle: Text(lastDate),
+                                    isThreeLine: true,
+                                    trailing: Icon(Icons.attach_money),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
                       ),
-                    ],
-                  );
-              }
-            }),
-            /*
+                    ),
+                  ),
+                ],
+              );
+          }
+        });
+    /*
         bottomNavigationBar: BottomNavigationBar(
           unselectedItemColor: Theme.of(context).primaryColor,
           selectedItemColor: Theme.of(context).primaryColor,
@@ -330,8 +373,73 @@ class LandingPage extends StatelessWidget {
             ),
           ],
         ),*/
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final user = Provider.of<User>(context, listen: false);
+    //return generateUI(context, user);
+    return SafeArea(
+      child: Scaffold(
+        body: FutureBuilder<EnhancedProfile>(
+          future: load(
+              context, user), // a previously-obtained Future<String> or null
+          builder:
+              (BuildContext context, AsyncSnapshot<EnhancedProfile> snapshot) {
+            Widget children;
+
+            if (snapshot.hasData) {
+              children = generateUI(context, user, snapshot.data);
+            } else if (snapshot.hasError) {
+              children = generateUI(context, user, null);
+            } else {
+              children = Column(
+                children: <Widget>[
+                  LoadingScreen(),
+                  const Padding(
+                    padding: EdgeInsets.only(top: 16),
+                    child: Text('Awaiting result...'),
+                  )
+                ],
+              );
+            }
+            return children;
+          },
+        ),
       ),
     );
+  }
+
+  Future<EnhancedProfile> load(BuildContext context, User user) async {
+    print('Loading..');
+    EnhancedProfile data = EnhancedProfile(
+      userId: user.uid,
+      name: user.displayName,
+      email: user.email,
+      mobile: '',
+      address: '',
+      profileUrl: null,
+    );
+    if (user != null) {
+      EnhancedProfileRepo profileRepo = EnhancedProfileRepo();
+      final Future<List<EnhancedProfile>> records =
+          profileRepo.fetchEnhancedProfilesByEmail(user.email);
+      records.then((users) async {
+        users.forEach((u) {
+          if (_profile == null) {
+            _profile = u;
+            print('Profile = $_profile');
+            return _profile;
+          }
+        });
+        final bool status = await profileRepo.saveEnhancedProfile(data);
+        if (status) {
+          print('Profile saved');
+        }
+        return data;
+      });
+    }
+    return data;
   }
 }
 
@@ -370,12 +478,14 @@ class CustomButton extends StatelessWidget {
               context,
               MaterialPageRoute<void>(
                 builder: (context) {
-                  return RaiseRequest(user: user, code: null,);
+                  return RaiseRequest(
+                    user: user,
+                    code: null,
+                  );
                 },
               ),
             );
-          }
-          else if (buttonText == 'My Requests') {
+          } else if (buttonText == 'My Requests') {
             Navigator.push(
               context,
               MaterialPageRoute<void>(
@@ -387,8 +497,7 @@ class CustomButton extends StatelessWidget {
                 },
               ),
             );
-          }
-          else if (buttonText == 'Donate') {
+          } else if (buttonText == 'Donate') {
             Navigator.push(
               context,
               MaterialPageRoute<void>(
