@@ -133,13 +133,16 @@ class LandingPage extends StatelessWidget {
       }
     }
     String fullname = user.displayName;
+    if (((fullname == null) || (fullname == '')) && (profile != null)) {
+      fullname = profile.name;
+    }
     if ((fullname == null) || (fullname == '')) {
       fullname = user.email;
       if (fullname != null) {
         fullname = user.email.split('@').first;
       }
     }
-    final String username = user.email != null ? user.email : '';
+    final String username = user.email != null ? user.email : profile != null ? profile.email : '';
     final streamQS = Firestore.instance
         .collection(RequestCallApi.db_name)
         .where('owner.email', isEqualTo: username.toLowerCase())
@@ -158,7 +161,7 @@ class LandingPage extends StatelessWidget {
               //print('Doc size = ${docs.length}');
               double totalPaid = 0.00;
               double totalReceived = 0.00;
-              double totalShare = 0.00;
+              double totalShare = profile != null ? profile.totalDonated : 0.00;
               String lastDate = '';
               String ownerName = null;
               snapshot.data.documents.forEach((doc) {
@@ -419,6 +422,10 @@ class LandingPage extends StatelessWidget {
       mobile: '',
       address: '',
       profileUrl: null,
+      totalRaised: 0.00,
+      totalDonated: 0.00,
+      raisedCount: 0,
+      donatedCount: 0
     );
     if (user != null) {
       EnhancedProfileRepo profileRepo = EnhancedProfileRepo();

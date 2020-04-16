@@ -14,10 +14,10 @@ class EnhancedProfile {
   String profileUrl;
   bool newsletter;
   String subscribeEmail;
-  double totalRaised;
-  double totalDonated;
-  int raisedCount;
-  int donatedCount;
+  double totalRaised = 0.00;
+  double totalDonated = 0.00;
+  int raisedCount = 0;
+  int donatedCount = 0;
 
   EnhancedProfile(
       {@required this.userId,
