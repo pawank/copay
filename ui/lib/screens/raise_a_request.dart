@@ -20,6 +20,7 @@ import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/upi_app.dart';
 import 'package:copay/services/api.dart';
 import 'package:copay/services/donation_api_impl.dart';
+import 'package:copay/services/enhanced_user_api.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
 import 'package:currency_pickers/country.dart';
@@ -114,7 +115,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   contact_select.Contact _contact;
   String _friendContactEmail;
   dynamic _paymentData;
-  UpiIndiaResponse _upiResponse;
+  UpiIndiaResponse2 _upiResponse;
   
   //image / video
   Future<String> getCameraAndVideoPaths(String imageOrVideo) async {
@@ -600,7 +601,7 @@ String getPaymentDone() {
     status = _requestCall.txnRef != null && _requestCall.txnRef.isNotEmpty && _requestCall.status == 'Paid';
   }
   if (!status) {
-    status = _upiResponse != null && _upiResponse.status.toLowerCase() == 'success' && _upiResponse.transactionId.isNotEmpty;
+    status = _upiResponse != null && _upiResponse.status.toLowerCase() == 'success' && _upiResponse.transactionId != null && _upiResponse.transactionId.isNotEmpty;
   }
   if (status) {
     msg = 'SUCCESS';
@@ -657,7 +658,7 @@ Future<String> callUpiPayment(UpiIndia upi) async {
             //print('Data found: $data');
             setState(() {
               if (data != null) {
-                _upiResponse = UpiIndiaResponse(data);
+                _upiResponse = UpiIndiaResponse2(data);
               }
             });
             bool isSuccess = false;
@@ -669,7 +670,7 @@ Future<String> callUpiPayment(UpiIndia upi) async {
               if (_upiResponse.status == 'success') {
                 _requestCall.txnType = 'received';
                 _requestCall.status = 'Paid';
-                 isSuccess = false;
+                 isSuccess = true;
               }
                 _requestCall.txnRef = _upiResponse.transactionId;
                 _requestCall.paymentData = data;
@@ -677,6 +678,41 @@ Future<String> callUpiPayment(UpiIndia upi) async {
                 await donationRepo.saveRequestCall(_requestCall);
                 await profileRepo.saveRequestCall(_requestCall);
                 if (isSuccess) {
+                            final double paidAmount = _upiResponse.amount;
+                            final userRepo = Provider.of<EnhancedProfileRepo>(context, listen: false);
+                            if (userRepo != null) {
+                              final profile = await userRepo.fetchSingleEnhancedProfileByEmail(user.email,user.uid);
+                              //profile.totalDonated += paidAmount;
+                              //profile.donatedCount += 1;
+                              //await userRepo.saveEnhancedProfile(profile);
+
+                            final String docid = EnhancedUserApi.db_name + '/' + profile.id;
+                            final DocumentReference postRef = Firestore.instance.document(docid);
+await Firestore.instance
+        .collection(EnhancedUserApi.db_name)
+        .document(profile.id)
+        .get()
+        .then((DocumentSnapshot postSnapshot) {
+Firestore.instance.runTransaction((Transaction tx) async {
+  if (postSnapshot.exists) {
+    int cnt = profile.donatedCount + 1;
+    double v = profile.totalDonated + paidAmount;
+    await tx.update(postRef, <String, dynamic>{'donatedCount': cnt, 'totalDonated': v, 'raisedCount': profile.raisedCount, 'totalRaised': profile.totalRaised});
+  }
+});
+      // use ds as a snapshot
+    });
+    /*
+await Firestore.instance.runTransaction((Transaction tx) async {
+  DocumentSnapshot postSnapshot = await tx.get(postRef);
+  if (postSnapshot.exists) {
+    int cnt = profile.donatedCount + 1;
+    double v = profile.totalDonated + paidAmount;
+    await tx.update(postRef, <String, dynamic>{'donatedCount': cnt, 'totalDonated': v});
+  }
+});
+*/
+                            }
                   //Send paid email and SMS
                   await sendPaidEmailAndSMS(_requestCall);
                 }
@@ -685,7 +721,7 @@ Future<String> callUpiPayment(UpiIndia upi) async {
 }
 
   Future<void> _onItemTapped(int index) async {
-    print('Tapped for action');
+    //print('Tapped for action');
   setState(() {
     _selectedIndex = index;
   });
@@ -751,7 +787,7 @@ Future<String> callUpiPayment(UpiIndia upi) async {
                 //print('Sending API request for contact = $_contact');
                 // Get contacts matching a string
 Iterable<Contact> users = await ContactsService.getContacts(query : _contact.fullName);
-print('No. of matching contact found = ${users.length} for query = ${_contact.fullName}');
+//print('No. of matching contact found = ${users.length} for query = ${_contact.fullName}');
 users.take(1).forEach((c) async {
     String email = null;
     if (c.emails != null) {
@@ -796,14 +832,19 @@ users.take(1).forEach((c) async {
                           _loadingMessage = 'Sending Donation Request.\nPlease wait...';
                           _isLoading = true;
                         });
-                        print('Request JSON = $request_json');
+                        //print('Request JSON = $request_json');
                         RequestCall donation = _requestCall;
                         donation.requestedOn = Timestamp.now();
                         donation.status = 'Created';
                         donation.donor = donor;
                         final bool status = await donationRepo.saveRequestCall(donation);
                         if (status) {
-                        final r = await HttpApi.raiseCompaignRequestDonor(_requestCall.code, request_json);
+                            int shareNo = _requestCall.shared != null ? _requestCall.shared + 1 : 1;
+                            //int donationNo = _requestCall.donated != null ? _requestCall.donated + 1 : 1;
+                            _requestCall.shared = shareNo;
+                            //_requestCall.donated = donationNo;
+                            await profileRepo.saveRequestCall(_requestCall);
+                            final r = await HttpApi.raiseCompaignRequestDonor(_requestCall.code, request_json);
                             Fluttertoast.showToast(
                                 msg: 'Request Shared',
                                 toastLength: Toast.LENGTH_LONG,
@@ -848,6 +889,13 @@ users.take(1).forEach((c) async {
   }
 }
 
+  bool isDeleteAllowByStatus(RequestCall request) {
+    if (request != null) {
+      return !(request.status == 'Paid' || request.shared > 0 || request.donated > 0);
+    }
+    return false;
+  }
+
   @override
   Widget build(BuildContext context) {
     final RequestCallRepo profileRepo =
@@ -884,7 +932,7 @@ users.take(1).forEach((c) async {
               },
             ),
             actions: <Widget>[
-              ((_requestCall != null) && (_requestCall.email != null) && (user != null) && (_requestCall.email == user.email)) ?
+              ((_requestCall != null) && (_requestCall.email != null) && (user != null) && (_requestCall.owner != null && _requestCall.owner['email'] == user.email) && isDeleteAllowByStatus(_requestCall)) ?
               IconButton(
                   key: Key(Keys.logout),
                   icon: Icon(CommunityMaterialIcons.trash_can),
@@ -1497,7 +1545,7 @@ users.take(1).forEach((c) async {
                       if (yesno == true) {
                       setState(() {
                         _saveEnabled = false;
-                        _loadingMessage = 'Uploading photos, media and request. Please wait...';
+                        _loadingMessage = 'Uploading photos, \nmedia and request. \nPlease wait...';
                         _isLoading = true;
                       });
                       
@@ -1505,8 +1553,31 @@ users.take(1).forEach((c) async {
                         await uploadPic(callbackVideoLink, true);
                           status = await profileRepo.saveRequestCall(data);
                           if (status) {
+                            final userRepo = Provider.of<EnhancedProfileRepo>(context, listen: false);
+                            if (userRepo != null) {
+                              final profile = await userRepo.fetchSingleEnhancedProfileByEmail(user.email,user.uid);
+                              //profile.totalRaised += data.amount;
+                              //profile.raisedCount += 1;
+                              //await userRepo.saveEnhancedProfile(profile);
+                            final String docid = EnhancedUserApi.db_name + '/' + profile.id;
+                            final DocumentReference postRef = Firestore.instance.document(docid);
+await Firestore.instance
+        .collection(EnhancedUserApi.db_name)
+        .document(profile.id)
+        .get()
+        .then((DocumentSnapshot postSnapshot) {
+Firestore.instance.runTransaction((Transaction tx) async {
+  if (postSnapshot.exists) {
+    int cnt = profile.raisedCount + 1;
+    double v = profile.totalRaised + data.amount;
+    await tx.update(postRef, <String, dynamic>{'donatedCount': profile.donatedCount, 'totalDonated': profile.totalDonated, 'raisedCount': cnt, 'totalRaised': v});
+  }
+});
+      // use ds as a snapshot
+    });
+                            }
                             await resetCameraAndVideoPaths(null, null);
-                            print('Saved profile information');
+                            //print('Saved profile information');
                             Fluttertoast.showToast(
                                 msg: 'Request has been successfully submitted',
                                 toastLength: Toast.LENGTH_LONG,
@@ -1585,7 +1656,7 @@ users.take(1).forEach((c) async {
             BottomNavigationBarItem(
               icon: Icon(Icons.send),
               activeIcon: Icon(Icons.send),
-              title: Text('Request'),
+              title: Text('Donor'),
             ),
           ],
           currentIndex: _selectedIndex,

@@ -129,7 +129,13 @@ class SignInPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         elevation: 2.0,
-        title: Text(title),
+        title:
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+          Image.asset('assets/app-logo.png'),
+          Text(title),
+        ],), 
       ),
       // Hide developer menu while loading in progress.
       // This is so that it's not possible to switch auth service while a request is in progress

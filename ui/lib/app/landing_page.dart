@@ -10,6 +10,7 @@ import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/user_profile.dart';
 import 'package:copay/services/auth_service.dart';
+import 'package:copay/services/donation_api.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_api.dart';
 import 'package:flutter/material.dart';
@@ -142,9 +143,10 @@ class LandingPage extends StatelessWidget {
         fullname = user.email.split('@').first;
       }
     }
-    final String username = user.email != null ? user.email : profile != null ? profile.email : '';
+    final String username =
+        user.email != null ? user.email : profile != null ? profile.email : '';
     final streamQS = Firestore.instance
-        .collection(RequestCallApi.db_name)
+        .collection(DonationApi.db_name)
         .where('owner.email', isEqualTo: username.toLowerCase())
         .snapshots();
     return StreamBuilder<QuerySnapshot>(
@@ -159,14 +161,20 @@ class LandingPage extends StatelessWidget {
             default:
               child:
               //print('Doc size = ${docs.length}');
-              double totalPaid = 0.00;
+              double totalRaised = profile != null ? profile.totalRaised : 0.00;
               double totalReceived = 0.00;
               double totalShare = profile != null ? profile.totalDonated : 0.00;
               String lastDate = '';
               String ownerName = null;
+              String shareMsg = '';
+              String donationMsg = '';
+              Set<String> codes = Set();
+              int shareNo = 0;
+              int donationNo = 0;
               snapshot.data.documents.forEach((doc) {
                 ownerName = doc['owner']['name'];
-                totalPaid += doc['amount'];
+                codes.add(doc['code']);
+                //totalPaid += doc['amount'];
                 if ((doc['txnType'] != null) &&
                     (doc['txnType'] == 'received')) {
                   totalReceived += doc['amount'];
@@ -176,7 +184,26 @@ class LandingPage extends StatelessWidget {
                 }
                 DateTime dt = (doc['createdOn'] as Timestamp).toDate();
                 lastDate = 'Till ' + new DateFormat.yMMMMd('en_US').format(dt);
+                /*
+                if ((doc['shared'] == null) || (doc['shared'] == 0)) {
+                  shareMsg = 'Pending Sharing';
+                  shareNo += 1;
+                }
+                if ((doc['donated'] == null) || (doc['donated'] == 0)){
+                  donationMsg = 'Pending Donation';
+                  donationNo += 1;
+                }
+                */
+                if ((doc['donor'] != null) && (doc['donor']['email'] == user.email)){
+                  donationNo += 1;
+                }
               });
+              int noRequests = codes.length;
+              shareNo = (profile != null ? profile.raisedCount : 0) - noRequests;
+              if (shareNo < 0) {
+                  shareNo = 0;
+              }
+              donationNo = donationNo - (profile != null ? profile.donatedCount : 0);
               return Column(
                 children: <Widget>[
                   SingleChildScrollView(
@@ -253,16 +280,16 @@ class LandingPage extends StatelessWidget {
                               Flexible(
                                 child: CustomButton(
                                     buttonType: ButtonType.payBills,
-                                    user: user),
+                                    user: user, message: '',),
                               ),
                               Flexible(
                                 child: CustomButton(
                                     buttonType: ButtonType.receiptients,
-                                    user: user),
+                                    user: user, message: shareNo.toString(),),
                               ),
                               Flexible(
                                 child: CustomButton(
-                                    buttonType: ButtonType.donate, user: user),
+                                    buttonType: ButtonType.donate, user: user, message: donationNo.toString(),),
                               ),
                               /*
                         Flexible(
@@ -295,7 +322,7 @@ class LandingPage extends StatelessWidget {
                                   child: ListTile(
                                     key: Key('1'),
                                     leading: Text(
-                                      totalPaid.toInt().toString(),
+                                      totalRaised.toInt().toString(),
                                       style: TextStyle(
                                           color: Colors.blue,
                                           fontWeight: FontWeight.bold),
@@ -414,46 +441,46 @@ class LandingPage extends StatelessWidget {
   }
 
   Future<EnhancedProfile> load(BuildContext context, User user) async {
-    print('Loading..');
+    //print('Loading..');
     EnhancedProfile data = EnhancedProfile(
-      userId: user.uid,
-      name: user.displayName,
-      email: user.email,
-      mobile: '',
-      address: '',
-      profileUrl: null,
-      totalRaised: 0.00,
-      totalDonated: 0.00,
-      raisedCount: 0,
-      donatedCount: 0
-    );
+        userId: user.uid,
+        name: user.displayName,
+        email: user.email,
+        mobile: '',
+        address: '',
+        profileUrl: null,
+        totalRaised: 0.00,
+        totalDonated: 0.00,
+        raisedCount: 0,
+        donatedCount: 0);
     if (user != null) {
       EnhancedProfileRepo profileRepo = EnhancedProfileRepo();
       final Future<List<EnhancedProfile>> records =
           profileRepo.fetchEnhancedProfilesByEmail(user.email);
-      records.then((users) async {
+      await records.then((users) async {
         users.forEach((u) {
           if (_profile == null) {
             _profile = u;
-            print('Profile = $_profile');
-            return _profile;
+            //print('Profile = $_profile');
           }
         });
-        final bool status = await profileRepo.saveEnhancedProfile(data);
-        if (status) {
-          print('Profile saved');
-        }
-        return data;
       });
+      final bool status = await profileRepo
+          .saveEnhancedProfile(_profile != null ? _profile : data);
+      if (status) {
+        //print('Profile saved');
+      }
+      //return _profile != null ? _profile : data;
     }
-    return data;
+    return _profile != null ? _profile : data;
   }
 }
 
 class CustomButton extends StatelessWidget {
   final ButtonType buttonType;
   final User user;
-  const CustomButton({Key key, this.buttonType, this.user}) : super(key: key);
+  final String message;
+  const CustomButton({Key key, this.buttonType, this.user, this.message}) : super(key: key);
   @override
   Widget build(BuildContext context) {
     String buttonText = '', buttonImage;
@@ -478,8 +505,10 @@ class CustomButton extends StatelessWidget {
     return Material(
       color: Colors.transparent,
       child: InkWell(
+        //highlightColor: Colors.blue,
+        splashColor: Colors.orangeAccent,
         onTap: () {
-          print('Clicked: ${buttonText}');
+          //print('Clicked: ${buttonText}');
           if (buttonText == 'Raise Request') {
             Navigator.push(
               context,
@@ -522,26 +551,46 @@ class CustomButton extends StatelessWidget {
           padding: EdgeInsets.all(15.0),
           child: Column(
             children: <Widget>[
-              Container(
-                padding: EdgeInsets.all(17),
-                decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(7.0),
-                  gradient: LinearGradient(
-                    colors: [Colors.white10, Colors.black12],
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                  ),
-                  boxShadow: [
-                    BoxShadow(
-                      color: Colors.black12,
-                      blurRadius: 5.0,
-                      offset: Offset(0, 3),
+              Stack(
+                children: <Widget>[
+                  Container(
+                    padding: EdgeInsets.all(17),
+                    decoration: BoxDecoration(
+                      borderRadius: BorderRadius.circular(7.0),
+                      gradient: LinearGradient(
+                        colors: [Colors.white10, Colors.black12],
+                        begin: Alignment.topCenter,
+                        end: Alignment.bottomCenter,
+                      ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black12,
+                          blurRadius: 5.0,
+                          offset: Offset(0, 3),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-                child: Image.asset(
-                  buttonImage,
-                ),
+                    child: Image.asset(
+                      buttonImage,
+                    ),
+                  ),
+                  if ((buttonText != 'Raise Request') && message != '0')
+                  Positioned(
+                    bottom: 0,
+                    right: 0,
+                    child: Container(
+                      width: 20.0,
+                      height: 20.0,
+                      decoration: BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: FittedBox(
+                        child: Text(message, style: TextStyle(color: Colors.white),), 
+                      ),
+                    ),
+                  ),
+                ],
               ),
               SizedBox(
                 height: 5.0,

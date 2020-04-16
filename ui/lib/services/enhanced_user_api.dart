@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class EnhancedUserApi {
+  static final String db_name = 'profiles';
   final Firestore _db = Firestore.instance;
   final String path;
   CollectionReference ref;

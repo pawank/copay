@@ -51,7 +51,9 @@ class CloudStoreConvertor {
           requestedOn: doc['requestedOn'] != null ? doc['requestedOn'] as Timestamp : Timestamp.now(),
           owner: owner,
           donor: donor,
-          paymentOn: doc['paymentOn'] != null ? doc['paymentOn'] as Timestamp : Timestamp.now()
+          paymentOn: doc['paymentOn'] != null ? doc['paymentOn'] as Timestamp : Timestamp.now(),
+          shared: doc['shared'] != null ? doc['shared'] : 0,
+          donated: doc['donated'] != null ? doc['donated'] : 0
           );
     
     } catch (e) {

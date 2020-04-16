@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 
 class EnhancedProfile {
+  String id;
   String userId;
   String name;
   String email;
@@ -20,7 +21,8 @@ class EnhancedProfile {
   int donatedCount = 0;
 
   EnhancedProfile(
-      {@required this.userId,
+      {this.id,
+        @required this.userId,
         @required this.email,
       @required this.name,
       @required this.mobile,
@@ -39,7 +41,8 @@ class EnhancedProfile {
       });
 
   EnhancedProfile.fromMap(Map snapshot, String id)
-      : userId = id ?? '',
+      : id = id ?? null,
+        userId = id ?? '',
         email = snapshot['email'] ?? '',
         name = snapshot['name'] ?? '',
         mobile = snapshot['mobile'] ?? '',
@@ -53,13 +56,14 @@ class EnhancedProfile {
         profileUrl = snapshot['profileUrl'] ?? '',
         newsletter = snapshot['newsletter'] ?? false,
         subscribeEmail = snapshot['subscribeEmail'] ?? '',
-        totalRaised = snapshot['totalRaised'] ?? 0.00,
-        totalDonated = snapshot['totalDonated'] ?? 0.00,
+        totalRaised = snapshot['totalRaised'].toDouble() ?? 0.00,
+        totalDonated = snapshot['totalDonated'].toDouble() ?? 0.00,
         raisedCount = snapshot['raisedCount'] ?? 0,
         donatedCount = snapshot['donatedCount'] ?? 0;
 
   dynamic toJson() {
     return {
+      'id': id,
       'userId': userId,
       'email': email,
       'name': name,

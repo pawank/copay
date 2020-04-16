@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:upi_india/upi_india.dart';
 
 double baseHeight = 640.0;
 
@@ -75,4 +76,53 @@ class CustomColors {
   static const Color Grey = Color.fromRGBO(157, 157, 157, 1);
   static const Color Black50 = Color.fromRGBO(0, 0, 0, 0.5);
   static const Color Green = Color.fromRGBO(61, 179, 158, 1);
+}
+
+// Class to process the response of upi request.
+class UpiIndiaResponse2 {
+  /// It is the Transaction ID from the response.
+  String transactionId;
+
+  /// responseCode is the UPI Response code. You don't particularly need to use this.
+  /// You may refer to https://ncpi.org.in for list of responseCode.
+  String responseCode;
+
+  /// approvalRefNo is the UPI Approval reference number (beneficiary).
+  /// It is optional. You may receive it as null.
+  String approvalRefNo;
+
+  /// status gives the status of Transaction.
+  /// There are three approved status: success, failure, submitted.
+  /// DO NOT use the string directly. Instead use [UpiIndiaResponseStatus]
+  String status;
+
+  /// txnRef gives the Transaction Reference ID passed in input.
+  String transactionRefId;
+
+  double amount;
+
+  UpiIndiaResponse2(String responseString) {
+    List<String> _parts = responseString.split('&');
+
+    for (int i = 0; i < _parts.length; ++i) {
+      String key = _parts[i].split('=')[0];
+      String value = _parts[i].split('=')[1];
+      if (key.toLowerCase() == "txnid") {
+        transactionId = value;
+      } else if (key.toLowerCase() == "responsecode") {
+        responseCode = value;
+      } else if (key.toLowerCase() == "approvalrefno") {
+        approvalRefNo = value;
+      } else if (key.toLowerCase() == "status") {
+        if(value.toLowerCase() == "success") status = "success";
+        else if(value.toLowerCase().contains("fail")) status = "failure";
+        else if(value.toLowerCase().contains("submit")) status = "submitted";
+        else status = "other";
+      } else if (key.toLowerCase() == "txnref") {
+        transactionRefId = value;
+      } else if (key.toLowerCase() == "amount") {
+        amount = double.parse(value);
+      }
+    }
+  }
 }

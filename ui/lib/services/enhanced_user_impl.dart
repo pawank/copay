@@ -51,6 +51,35 @@ class EnhancedProfileRepo extends ChangeNotifier {
     final result = await _api.addDocument(data.toJson());
     return;
   }
+  
+  Future<EnhancedProfile> fetchSingleEnhancedProfileByEmail(
+      String email, String uid) async {
+    final resultF = _api.getDataCollection();
+    return resultF.then((result) {
+      final _profiles = result.documents
+          .where((doc) => doc.data['email'] == email)
+          .map((doc) => EnhancedProfile.fromMap(doc.data, doc.documentID))
+          .toList();
+      if (_profiles.isEmpty) {
+          return EnhancedProfile(
+            id: null,
+            userId: uid,
+            name: '',
+            email: email,
+            mobile: '',
+            address: '',
+            profileUrl: null,
+            totalRaised: 0.00,
+            totalDonated: 0.00,
+            raisedCount: 0,
+            donatedCount: 0
+          );
+
+      } else {
+        return _profiles.first;
+      }
+    });
+  }
 
   Future<List<EnhancedProfile>> fetchEnhancedProfilesByEmail(
       String email) async {

@@ -45,6 +45,7 @@ class _UserProfileState extends State<UserProfile> {
   File _image;
   String _profileUrl;
   bool _isLoading = true;
+  String _loadingMessage = 'Loading...';
 
   @override
   void initState() {
@@ -283,7 +284,7 @@ class _UserProfileState extends State<UserProfile> {
               ),
             ],
           ),
-          body: _isLoading == true ? LoadingScreen() :
+          body: _isLoading == true ? LoadingScreen(message: _loadingMessage,) :
           SingleChildScrollView(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.start,
@@ -517,14 +518,16 @@ class _UserProfileState extends State<UserProfile> {
                         defaultActionText: 'Yes',
                       ).show(context);
                       if (yesno == true) {
-                        EnhancedProfile data = EnhancedProfile(
-                            userId: user.uid,
-                            name: _fullnameController.text.trim(),
-                            email: user.email,
-                            mobile: _phoneNoController.text,
-                            address: _addressController.text,
-                            profileUrl: getImageFilename(_image), 
-                            );
+                        setState(() {
+                          _loadingMessage = 'Saving Profile Information..';
+                            _isLoading = true;
+                        });
+                        final profile = await profileRepo.fetchSingleEnhancedProfileByEmail(user.email, user.uid);
+                        EnhancedProfile data = profile;
+                        data.name = _fullnameController.text.trim();
+                        data.mobile = _phoneNoController.text;
+                        data.address = _addressController.text;
+                        data.profileUrl = getImageFilename(_image);
                         final bool status =
                             await profileRepo.saveEnhancedProfile(data);
                         if (status) {
@@ -550,6 +553,10 @@ class _UserProfileState extends State<UserProfile> {
     );
 
                         }
+                        setState(() {
+                          _loadingMessage = 'Loading...';
+                            _isLoading = false;
+                        });
                       }
                     },
                     shape: RoundedRectangleBorder(
