@@ -136,6 +136,7 @@ class SignInPage extends StatelessWidget {
           Image.asset('assets/app-logo.png'),
           Text(title),
         ],), 
+        leading: Container(),
       ),
       // Hide developer menu while loading in progress.
       // This is so that it's not possible to switch auth service while a request is in progress

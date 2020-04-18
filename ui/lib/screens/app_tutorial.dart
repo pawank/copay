@@ -2,6 +2,7 @@ import 'package:copay/app/sign_in/sign_in_page.dart';
 import 'package:copay/models/page_modal.dart';
 import 'package:copay/screens/app_tutorial_view_indicator.dart';
 import 'package:flutter/material.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AppTutorial extends StatelessWidget {
   const AppTutorial({Key key}) : super(key: key);
@@ -48,6 +49,12 @@ class AppTutorialBodyState extends State<AppTutorialBody> {
       });
     }
   }
+  
+  Future<bool> setDemoSplashViewed() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.setBool('copay_demo_splash', false);
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -98,7 +105,8 @@ class AppTutorialBodyState extends State<AppTutorialBody> {
               secondChild: FlatButton(
                 //color: Colors.greenAccent,
                 color: Colors.blue,
-                onPressed: () {
+                onPressed: () async {
+                  await setDemoSplashViewed();
             Navigator.push(
               context,
               MaterialPageRoute<void>(
