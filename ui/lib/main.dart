@@ -2,6 +2,7 @@ import 'package:camera/camera.dart';
 import 'package:copay/app/auth_widget_builder.dart';
 import 'package:copay/app/email_link_error_presenter.dart';
 import 'package:copay/app/auth_widget.dart';
+import 'package:copay/screens/app_tutorial.dart';
 import 'package:copay/services/apple_sign_in_available.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:copay/services/auth_service_adapter.dart';
@@ -98,7 +99,8 @@ class MyApp extends StatelessWidget {
         return MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(primarySwatch: Colors.indigo),
-          home: EmailLinkErrorPresenter.create(
+          home: 
+          EmailLinkErrorPresenter.create(
             context,
             child: AuthWidget(userSnapshot: userSnapshot),
           ),

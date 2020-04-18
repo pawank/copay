@@ -1,5 +1,6 @@
 import 'package:copay/app/home_page.dart';
 import 'package:copay/app/landing_page.dart';
+import 'package:copay/screens/app_tutorial.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:flutter/material.dart';
 
@@ -16,7 +17,8 @@ class AuthWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     if (userSnapshot.connectionState == ConnectionState.active) {
-      return userSnapshot.hasData ? LandingPage(title: 'Home') : SignInPageBuilder();
+      return userSnapshot.hasData ? LandingPage(title: 'Home') : AppTutorial();
+      //return userSnapshot.hasData ? LandingPage(title: 'Home') : SignInPageBuilder();
     }
     return Scaffold(
       body: Center(
