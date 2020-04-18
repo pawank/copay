@@ -7,9 +7,6 @@
 		<string>Default</string>
 	</array>
 	<key>com.apple.developer.associated-domains</key>
-	<array>
-		<string>applinks:firebaseauthdemoflutter.page.link</string>
-		<string>com.copay.portal</string>
-	</array>
+	<array/>
 </dict>
 </plist>

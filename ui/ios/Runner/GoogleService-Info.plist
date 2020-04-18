@@ -3,23 +3,23 @@
 <plist version="1.0">
 <dict>
 	<key>CLIENT_ID</key>
-	<string>352748322498-dqadvubkob0pavm6cvqjmi8h826ronbn.apps.googleusercontent.com</string>
+	<string>363814251128-qjatp95sfrunj7hgrhovlmnitn2ttn61.apps.googleusercontent.com</string>
 	<key>REVERSED_CLIENT_ID</key>
-	<string>com.googleusercontent.apps.352748322498-dqadvubkob0pavm6cvqjmi8h826ronbn</string>
+	<string>com.googleusercontent.apps.363814251128-qjatp95sfrunj7hgrhovlmnitn2ttn61</string>
 	<key>ANDROID_CLIENT_ID</key>
-	<string>352748322498-jm5d3ugb2c0e7l4jokcd50vtbg4rukgp.apps.googleusercontent.com</string>
+	<string>363814251128-3077ujaqjc5icujn8bkedk114oetcama.apps.googleusercontent.com</string>
 	<key>API_KEY</key>
-	<string>AIzaSyDK8BjoL4yLctGFckInrhs2X-qkJzV312k</string>
+	<string>AIzaSyAL0fSkz2HmI4X8__0FbvYrMiDPrwFKEoc</string>
 	<key>GCM_SENDER_ID</key>
-	<string>352748322498</string>
+	<string>363814251128</string>
 	<key>PLIST_VERSION</key>
 	<string>1</string>
 	<key>BUNDLE_ID</key>
-	<string>com.copay</string>
+	<string>com.copay.portal</string>
 	<key>PROJECT_ID</key>
-	<string>copay-6e4f5</string>
+	<string>copay-9d0a7</string>
 	<key>STORAGE_BUCKET</key>
-	<string>copay-6e4f5.appspot.com</string>
+	<string>copay-9d0a7.appspot.com</string>
 	<key>IS_ADS_ENABLED</key>
 	<false></false>
 	<key>IS_ANALYTICS_ENABLED</key>
@@ -31,8 +31,8 @@
 	<key>IS_SIGNIN_ENABLED</key>
 	<true></true>
 	<key>GOOGLE_APP_ID</key>
-	<string>1:352748322498:ios:478bf80ddfba701822855b</string>
+	<string>1:363814251128:ios:e80a1aa9510e574e3c5b8d</string>
 	<key>DATABASE_URL</key>
-	<string>https://copay-6e4f5.firebaseio.com</string>
+	<string>https://copay-9d0a7.firebaseio.com</string>
 </dict>
 </plist>

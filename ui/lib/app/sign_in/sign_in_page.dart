@@ -98,10 +98,19 @@ class SignInPage extends StatelessWidget {
       }
     }
   }
-
+  
   Future<void> _signInWithEmailAndPassword(BuildContext context) async {
     final navigator = Navigator.of(context);
     await EmailPasswordSignInPage.show(
+      context,
+      onSignedIn: navigator.pop,
+    );
+  }
+
+
+  Widget _signInWithEmailAndPasswordInline(BuildContext context) {
+    final navigator = Navigator.of(context);
+    EmailPasswordSignInPage.showInline(
       context,
       onSignedIn: navigator.pop,
     );
@@ -120,11 +129,18 @@ class SignInPage extends StatelessWidget {
     return Scaffold(
       appBar: AppBar(
         elevation: 2.0,
-        title: Text(title),
+        title:
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: <Widget>[
+          Image.asset('assets/app-logo.png'),
+          Text(title),
+        ],), 
       ),
       // Hide developer menu while loading in progress.
       // This is so that it's not possible to switch auth service while a request is in progress
-      drawer: isLoading ? null : DeveloperMenu(),
+      //drawer: isLoading ? null : DeveloperMenu(),
+      drawer: null,
       backgroundColor: Colors.grey[200],
       body: _buildSignIn(context),
     );
@@ -148,17 +164,21 @@ class SignInPage extends StatelessWidget {
     // Make content scrollable so that it fits on small screens
     return SingleChildScrollView(
       child: Container(
-        padding: EdgeInsets.all(16.0),
+        padding: EdgeInsets.all(10.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: <Widget>[
-            SizedBox(height: 32.0),
+            SizedBox(height: 12.0),
             SizedBox(
               height: 50.0,
               child: _buildHeader(),
             ),
-            SizedBox(height: 32.0),
+            SizedBox(height: 8.0),
+            SizedBox(
+              child: _signInWithEmailAndPasswordInline(context),
+            ),
+            SizedBox(height: 8),
             if (appleSignInAvailable.isAvailable) ...[
               AppleSignInButton(
                 // TODO: add key when supported
@@ -168,6 +188,27 @@ class SignInPage extends StatelessWidget {
               ),
               SizedBox(height: 8),
             ],
+            SizedBox(height: 8),
+            EmailPasswordSignInPage.create(context),
+            SizedBox(height: 8),
+            /*
+            SignInButton(
+              key: emailPasswordButtonKey,
+              text: Strings.signInWithEmailPassword,
+              onPressed:
+                  isLoading ? null : () => _signInWithEmailAndPassword(context),
+              textColor: Colors.white,
+              color: Colors.teal[700],
+            ),*/
+            SizedBox(height: 8),
+            SignInButton(
+              key: emailLinkButtonKey,
+              text: Strings.signInWithEmailLink,
+              onPressed: isLoading ? null : () => _signInWithEmailLink(context),
+              textColor: Colors.white,
+              color: Colors.blueGrey[700],
+            ),
+            SizedBox(height: 8),
             SocialSignInButton(
               key: googleButtonKey,
               assetName: 'assets/go-logo.png',
@@ -184,24 +225,6 @@ class SignInPage extends StatelessWidget {
               onPressed: isLoading ? null : () => _signInWithFacebook(context),
               color: Color(0xFF334D92),
             ),
-            SizedBox(height: 8),
-            SignInButton(
-              key: emailPasswordButtonKey,
-              text: Strings.signInWithEmailPassword,
-              onPressed:
-                  isLoading ? null : () => _signInWithEmailAndPassword(context),
-              textColor: Colors.white,
-              color: Colors.teal[700],
-            ),
-            SizedBox(height: 8),
-            SignInButton(
-              key: emailLinkButtonKey,
-              text: Strings.signInWithEmailLink,
-              onPressed: isLoading ? null : () => _signInWithEmailLink(context),
-              textColor: Colors.white,
-              color: Colors.blueGrey[700],
-            ),
-            SizedBox(height: 8),
             Text(
               Strings.or,
               style: TextStyle(fontSize: 14.0, color: Colors.black87),

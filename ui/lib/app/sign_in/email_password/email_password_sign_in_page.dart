@@ -25,6 +25,12 @@ class EmailPasswordSignInPage extends StatefulWidget {
       ),
     );
   }
+  
+  static Future<Widget> showInline(BuildContext context,
+      {VoidCallback onSignedIn}) async {
+            return EmailPasswordSignInPage.create(context, onSignedIn: onSignedIn);
+  }
+
 
   static Widget create(BuildContext context, {VoidCallback onSignedIn}) {
     final AuthService auth = Provider.of<AuthService>(context, listen: false);
@@ -151,6 +157,7 @@ class _EmailPasswordSignInPageState extends State<EmailPasswordSignInPage> {
       node: _node,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
+        //mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
           SizedBox(height: 8.0),
           _buildEmailField(),
@@ -190,23 +197,17 @@ class _EmailPasswordSignInPageState extends State<EmailPasswordSignInPage> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        elevation: 2.0,
-        title: Text(model.title),
-      ),
-      backgroundColor: Colors.grey[200],
-      body: SingleChildScrollView(
+    return 
+      SingleChildScrollView(
         child: Padding(
-          padding: EdgeInsets.all(16.0),
+          padding: EdgeInsets.all(0.0),
           child: Card(
             child: Padding(
-              padding: EdgeInsets.all(16.0),
+              padding: EdgeInsets.all(10.0),
               child: _buildContent(),
             ),
           ),
         ),
-      ),
     );
   }
 }

@@ -15,9 +15,11 @@
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
-	<string>$(FLUTTER_BUILD_NAME)</string>
+	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -25,26 +27,25 @@
 			<string>Editor</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>com.googleusercontent.apps.712817915772-rdisl2kn30vmsrupkkaonm2gfp67esod</string>
-				<string>fb321653788549507</string>
+				<string>com.googleusercontent.apps.363814251128-qjatp95sfrunj7hgrhovlmnitn2ttn61</string>
 			</array>
 		</dict>
 	</array>
 	<key>CFBundleVersion</key>
-	<string>$(FLUTTER_BUILD_NUMBER)</string>
-	<key>FacebookAppID</key>
-	<string>321653788549507</string>
-	<key>FacebookDisplayName</key>
-	<string>Time Tracker Flutter Test</string>
-	<key>LSApplicationQueriesSchemes</key>
-	<array>
-		<string>fbapi</string>
-		<string>fb-messenger-share-api</string>
-		<string>fbauth2</string>
-		<string>fbshareextension</string>
-	</array>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
+	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>NSAppTransportSecurity</key>
+	<dict>
+		<key>NSAllowsArbitraryLoads</key>
+		<true/>
+	</dict>
+	<key>NSCameraUsageDescription</key>
+	<string>Can I use the camera for allowing you to take feedback pics and short feedback clips, please?</string>
+	<key>NSContactsUsageDescription</key>
+	<string>App requires contacts access to function properly. It is required for sharing requests with your friends.</string>
+	<key>NSMicrophoneUsageDescription</key>
+	<string>Can I use the mic for video clips for feedback, please?</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>Can the app use photo library for uploading selected images for requests feedback?</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>
