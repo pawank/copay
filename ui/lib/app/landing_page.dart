@@ -126,7 +126,7 @@ class LandingPage extends StatelessWidget {
     //final userProfile = Provider.of<EnhancedProfile>(context, listen: false);
     String name = user.email;
     if (user.displayName != null) {
-      name = user.displayName;
+      name = user.displayName.split(' ').first;
     }
     if (name != null) {
       if (name.contains('@')) {
@@ -135,7 +135,7 @@ class LandingPage extends StatelessWidget {
     }
     String fullname = user.displayName;
     if (((fullname == null) || (fullname == '')) && (profile != null)) {
-      fullname = profile.name;
+      fullname = profile.name.split(' ').first;
     }
     if ((fullname == null) || (fullname == '')) {
       fullname = user.email;
@@ -173,6 +173,9 @@ class LandingPage extends StatelessWidget {
               int donationNo = 0;
               snapshot.data.documents.forEach((doc) {
                 ownerName = doc['owner']['name'];
+                if (ownerName != null) {
+                  ownerName = ownerName.split(' ').first;
+                }
                 codes.add(doc['code']);
                 //totalPaid += doc['amount'];
                 if ((doc['txnType'] != null) &&
@@ -237,7 +240,7 @@ class LandingPage extends StatelessWidget {
                                         ],
                                       ),
                                       Text(
-                                        'What would you do like to do today ?',
+                                        'What would you do like to do today?',
                                         style: TextStyle(color: Colors.white70),
                                       ),
                                     ],
@@ -309,7 +312,7 @@ class LandingPage extends StatelessWidget {
                         mainAxisSize: MainAxisSize.max,
                         children: <Widget>[
                           Text(
-                            'SCORE BOARD',
+                            'YOUR LEDGER',
                             style: TextStyle(
                               color: Theme.of(context).primaryColor,
                               fontSize: 15.0,
@@ -363,10 +366,9 @@ class LandingPage extends StatelessWidget {
                                           color: Colors.green,
                                           fontWeight: FontWeight.bold),
                                     ),
-                                    title: Text('TOTAL YOUR SHARE'),
+                                    title: Text('YOUR CONTRIBUTIONS'),
                                     subtitle: Text(lastDate),
                                     isThreeLine: true,
-                                    trailing: Icon(Icons.attach_money),
                                   ),
                                 ),
                               ],

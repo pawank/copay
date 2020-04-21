@@ -62,7 +62,8 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     // MultiProvider for top-level services that can be created right away
-    return MultiProvider(
+    return 
+    MultiProvider(
       providers: [
         Provider<AppleSignInAvailable>.value(value: appleSignInAvailable),
         Provider<AuthService>(
@@ -96,13 +97,16 @@ class MyApp extends StatelessWidget {
       ],
       child: AuthWidgetBuilder(
           builder: (BuildContext context, AsyncSnapshot<User> userSnapshot) {
-        return MaterialApp(
+        return 
+        MaterialApp(
           debugShowCheckedModeBanner: false,
           theme: ThemeData(primarySwatch: Colors.indigo),
           home: 
+          SafeArea(child: 
           EmailLinkErrorPresenter.create(
             context,
             child: AuthWidget(userSnapshot: userSnapshot),
+          ),
           ),
         );
       }),

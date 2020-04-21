@@ -159,14 +159,14 @@ class _EmailPasswordSignInPageState extends State<EmailPasswordSignInPage> {
         crossAxisAlignment: CrossAxisAlignment.stretch,
         //mainAxisAlignment: MainAxisAlignment.center,
         children: <Widget>[
-          SizedBox(height: 8.0),
+          SizedBox(height: 5.0),
           _buildEmailField(),
           if (model.formType !=
               EmailPasswordSignInFormType.forgotPassword) ...<Widget>[
             SizedBox(height: 8.0),
             _buildPasswordField(),
           ],
-          SizedBox(height: 8.0),
+          SizedBox(height: 5.0),
           FormSubmitButton(
             key: Key('primary-button'),
             text: model.primaryButtonText,
@@ -176,7 +176,7 @@ class _EmailPasswordSignInPageState extends State<EmailPasswordSignInPage> {
           SizedBox(height: 8.0),
           FlatButton(
             key: Key('secondary-button'),
-            child: Text(model.secondaryButtonText),
+            child: Text(model.secondaryButtonText, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),),
             onPressed: model.isLoading
                 ? null
                 : () => _updateFormType(model.secondaryActionFormType),
@@ -184,7 +184,7 @@ class _EmailPasswordSignInPageState extends State<EmailPasswordSignInPage> {
           if (model.formType == EmailPasswordSignInFormType.signIn)
             FlatButton(
               key: Key('tertiary-button'),
-              child: Text(Strings.forgotPasswordQuestion),
+              child: Text(Strings.forgotPasswordQuestion, style: TextStyle(fontWeight: FontWeight.bold, color: Colors.blue),),
               onPressed: model.isLoading
                   ? null
                   : () => _updateFormType(

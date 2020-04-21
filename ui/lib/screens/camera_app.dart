@@ -88,6 +88,7 @@ class _CameraAppHomeState extends State<CameraAppHome>
       if (controller != null) {
         onNewCameraSelected(controller.description);
       }
+    } else {
     }
   }
 
@@ -98,7 +99,7 @@ class _CameraAppHomeState extends State<CameraAppHome>
     return Scaffold(
       key: _scaffoldKey,
       appBar: AppBar(
-        title: const Text('Camera example'),
+        title: const Text('CoPay - Photos and Videos'),
       ),
       body: Column(
         children: <Widget>[
@@ -151,13 +152,23 @@ class _CameraAppHomeState extends State<CameraAppHome>
   /// Display the preview from the camera (or a message if the preview is not available).
   Widget _cameraPreviewWidget() {
     if (controller == null || !controller.value.isInitialized) {
-      return const Text(
+      return GestureDetector(child: 
+      
+      const Text(
         'Tap a camera',
         style: TextStyle(
           color: Colors.white,
           fontSize: 24.0,
           fontWeight: FontWeight.w900,
         ),
+      ),
+      onTap: (){
+          if ((cameras != null) && (cameras.isNotEmpty)) {
+              if (controller != null) {
+                //onNewCameraSelected(cameras.first);
+              }
+          }
+      },
       );
     } else {
       return AspectRatio(
@@ -295,6 +306,7 @@ class _CameraAppHomeState extends State<CameraAppHome>
           ),
         );
       }
+      //toggles.add(FlatButton.icon(onPressed: null, icon: Icon(Icons.backspace), label: Text('Back')));
     }
 
     return Row(children: toggles);

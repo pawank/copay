@@ -11,9 +11,9 @@ List<PageModel> pages = [
   ),
   PageModel(
     assetImagePath: 'assets/android/requests.jpeg',
-    text: 'Share and get help from friends.',
+    text: 'Raise a Request',
   ),
   PageModel(
       assetImagePath: 'assets/android/pay.jpeg',
-      text: 'Pay donation to the needful.'),
+      text: 'Share with friends and \nPay the beneficiary'),
 ];

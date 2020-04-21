@@ -126,7 +126,8 @@ class SignInPage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return 
+    Scaffold(
       appBar: AppBar(
         elevation: 2.0,
         title:
@@ -207,7 +208,7 @@ class SignInPage extends StatelessWidget {
               text: Strings.signInWithEmailLink,
               onPressed: isLoading ? null : () => _signInWithEmailLink(context),
               textColor: Colors.white,
-              color: Colors.blueGrey[700],
+              color: Colors.blue,
             ),
             SizedBox(height: 8),
             SocialSignInButton(
@@ -226,6 +227,7 @@ class SignInPage extends StatelessWidget {
               onPressed: isLoading ? null : () => _signInWithFacebook(context),
               color: Color(0xFF334D92),
             ),
+            /*
             Text(
               Strings.or,
               style: TextStyle(fontSize: 14.0, color: Colors.black87),
@@ -238,7 +240,7 @@ class SignInPage extends StatelessWidget {
               color: Colors.lime[300],
               textColor: Colors.black87,
               onPressed: isLoading ? null : () => _signInAnonymously(context),
-            ),
+            ),*/
           ],
         ),
       ),
