@@ -208,7 +208,7 @@ class SignInPage extends StatelessWidget {
               text: Strings.signInWithEmailLink,
               onPressed: isLoading ? null : () => _signInWithEmailLink(context),
               textColor: Colors.white,
-              color: Colors.blue,
+              color: Colors.indigo,
             ),
             SizedBox(height: 8),
             SocialSignInButton(

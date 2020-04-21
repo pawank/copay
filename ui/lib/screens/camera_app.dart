@@ -100,6 +100,19 @@ class _CameraAppHomeState extends State<CameraAppHome>
       key: _scaffoldKey,
       appBar: AppBar(
         title: const Text('CoPay - Photos and Videos'),
+        leading: new IconButton(
+          icon: new Icon(
+            Icons.arrow_back,
+            color: Colors.white,
+          ),
+          onPressed: () {
+            String data = imagePath != null ? imagePath: '';
+            if ((videoPath != null) && (videoPath.isNotEmpty)) {
+                data = data + ';' + videoPath; 
+            }
+            Navigator.of(context).pop(data);
+          },
+        ),
       ),
       body: Column(
         children: <Widget>[

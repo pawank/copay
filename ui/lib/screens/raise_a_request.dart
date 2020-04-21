@@ -15,6 +15,7 @@ import 'package:copay/models/cloud_store_convertor.dart';
 import 'package:copay/models/enhanced_user.dart';
 import 'package:copay/models/request_call.dart';
 import 'package:copay/screens/camera_app.dart';
+import 'package:copay/screens/feedback_form.dart';
 import 'package:copay/screens/request_calls.dart';
 import 'package:copay/screens/txn.dart';
 import 'package:copay/screens/upi_app.dart';
@@ -99,6 +100,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   //TextEditingController _amountController = TextEditingController(text: '');
   MoneyMaskedTextController _amountController = new MoneyMaskedTextController(
       decimalSeparator: '.', thousandSeparator: ',', rightSymbol: ' US\$');
+  TextEditingController _feedbackController = TextEditingController(text: '');
   File _image;
   String _profileUrl;
   String _imageUrl;
@@ -203,6 +205,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
     _upiIdController?.dispose();
     _phoneNoController?.dispose();
     _medialController?.dispose();
+    _feedbackController?.dispose();
     _requestCall = null;
     _contact = null;
     profileRepo = null;
@@ -354,6 +357,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
   _gstinController = TextEditingController(text: _requestCall.website);
   _upiIdController = TextEditingController(text: _requestCall.upiId);
   _medialController = TextEditingController(text: _requestCall.mediaUrl);
+  _feedbackController = TextEditingController(text: _requestCall.feedback);
       //email = requestOrDonation == 'request' ? _requestCall.owner['email'] : _requestCall.donor['email'];
       email = _requestCall.email;
       currency = _requestCall.currency;
@@ -412,6 +416,22 @@ class _RaiseRequestState extends State<RaiseRequest> {
         exception: e,
       ).show(context);
     }
+  }
+
+  Future<void> sendFeedback(BuildContext context, RequestCall request) async {
+            final data = await Navigator.push(
+              context,
+              MaterialPageRoute<String>(
+                builder: (context) {
+                  return FeedbackForm(user, code);
+                },
+              ),
+            ) as String;
+            print('Data found: $data');
+            setState(() {
+              if (data != null) {
+              }
+            });
   }
 
   Future<void> _deleteRequest(BuildContext context, RequestCall request) async {
@@ -985,6 +1005,13 @@ users.take(1).forEach((c) async {
                   onPressed: () async {
                     await _deleteRequest(context, _requestCall);
                   }) : Text(''),
+              if (requestOrDonation == 'donation')
+              IconButton(
+                  key: Key('Feedback'),
+                  icon: Icon(CommunityMaterialIcons.comment),
+                  onPressed: () async {
+                    await sendFeedback(context, _requestCall);
+                  }),
             ],
           ),
           body: 
@@ -1419,7 +1446,6 @@ users.take(1).forEach((c) async {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _medialController,
-                        //enabled: _saveEnabled,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -1511,6 +1537,39 @@ users.take(1).forEach((c) async {
                     ),
                   ),
                 ]),
+                /*
+                      SizedBox(height: 10),
+                      TextFormField(
+                        controller: _feedbackController,
+                        enabled: _saveEnabled,
+                        keyboardType: TextInputType.multiline,
+                        textInputAction: TextInputAction.next,
+                        maxLines: null,
+                        decoration: InputDecoration(
+                          labelText: 'Feedback',
+                          helperText: 'What\'s the beneficiary\'s feedback on the donation?',
+                          labelStyle: TextStyle(color: Colors.black),
+                          errorStyle: TextStyle(color: Colors.red),
+                          enabledBorder: UnderlineInputBorder(
+                            borderSide: _feedbackController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.black),
+                          ),
+                          focusedBorder: UnderlineInputBorder(
+                            borderSide: BorderSide(color: Colors.black),
+                          ),
+                          // contentPadding: EdgeInsets.only(top: 40, bottom: 20),
+                          suffixIcon: Padding(
+                            padding: const EdgeInsetsDirectional.only(
+                                top: 18, start: 50),
+                            child: getIconType(_feedbackController.text),
+                          ),
+                        ),
+                        style: TextStyle(
+                            fontFamily: 'worksans',
+                            color: Colors.black,
+                            fontSize: 18),
+                        //initialValue: address,
+                      ),
+                      */
                     ],
                   ),
                 ),

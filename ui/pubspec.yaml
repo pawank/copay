@@ -58,6 +58,9 @@ dependencies:
   upi_pay: 0.2.1
   loader: 0.4.0
   #sliding_up_panel: ^1.0.2
+  #zefyr: 0.10.0
+  flutter_rating_bar: 3.0.1+1
+  video_thumbnail: 0.2.1
   flutter:
     sdk: flutter
 
