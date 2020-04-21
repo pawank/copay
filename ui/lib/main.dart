@@ -8,6 +8,7 @@ import 'package:copay/services/auth_service.dart';
 import 'package:copay/services/auth_service_adapter.dart';
 import 'package:copay/services/donation_api_impl.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
+import 'package:copay/services/feedback_api_impl.dart';
 import 'package:copay/services/firebase_email_link_handler.dart';
 import 'package:copay/services/email_secure_store.dart';
 import 'package:copay/services/locator.dart';
@@ -93,6 +94,9 @@ class MyApp extends StatelessWidget {
         ),
         ChangeNotifierProvider(create: (_) => 
             locator<DonationRepo>()
+        ),
+        ChangeNotifierProvider(create: (_) => 
+            locator<DonationFeedbackRepo>()
         ),
       ],
       child: AuthWidgetBuilder(

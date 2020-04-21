@@ -119,6 +119,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
   dynamic _paymentData;
   UpiIndiaResponse2 _upiResponse;
   int _radioValue1 = -1;
+  String feedbackBy;
+  String feedbackOwner;
   
   void _handleRadioValueChange1(int value) {
     setState(() {
@@ -191,6 +193,9 @@ class _RaiseRequestState extends State<RaiseRequest> {
     if (_requestCall != null && _requestCall.email != null) {
       email = _requestCall.email;
     }
+    setState(() {
+      feedbackBy = email;
+    });
     //getRequestByCodeStream(code);
   }
 
@@ -246,7 +251,6 @@ class _RaiseRequestState extends State<RaiseRequest> {
       //_profileUrl = u.profileUrl;
       //StorageReference firebaseStorageRef = FirebaseStorage.instance.ref().child('gs://' + _profileUrl);
       final String bucket = 'gs://copay-9d0a7.appspot.com/' + u.profileUrl;
-      print(bucket);
       Future<StorageReference> firebaseStorageRefF =
           FirebaseStorage.instance.getReferenceFromUrl(bucket);
       firebaseStorageRefF.then((firebaseStorageRef) async {
@@ -374,6 +378,10 @@ class _RaiseRequestState extends State<RaiseRequest> {
       } else if (isIndividual == false) {
         _radioValue1 = 1;
       }
+      feedbackBy = email;
+      if (_requestCall.owner.containsKey('name')) {
+      feedbackOwner = _requestCall.owner['name'];
+      }
       _saveEnabled = code == null || (code != null && code.isEmpty);
       //_isLoading = false;
           });
@@ -419,15 +427,16 @@ class _RaiseRequestState extends State<RaiseRequest> {
   }
 
   Future<void> sendFeedback(BuildContext context, RequestCall request) async {
+            final email = (feedbackBy == null || feedbackBy.isEmpty) && request != null && request.owner != null ? request.owner['email'] : feedbackBy;
             final data = await Navigator.push(
               context,
               MaterialPageRoute<String>(
                 builder: (context) {
-                  return FeedbackForm(user, code);
+                  return DonationFeedbackForm(user, email, feedbackOwner, code);
                 },
               ),
             ) as String;
-            print('Data found: $data');
+            //print('Data found: $data');
             setState(() {
               if (data != null) {
               }
