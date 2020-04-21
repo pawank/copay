@@ -40,9 +40,12 @@ class _UPIScreenState extends State<UPIScreen> {
         receiverName: request.receiverName,
         transactionRefId: request.transactionRefId,
         transactionNote: request.transactionNote,
-        amount: request.amount,
+        amount: _amountController.text.isNotEmpty ? double.parse(_amountController.text.trim()) : request.amount,
         currency: request.currency,
     );
+    setState(() {
+      request = upi;
+    });
     /*
     UpiIndia upi = new UpiIndia(
       app: app,
@@ -55,7 +58,7 @@ class _UPIScreenState extends State<UPIScreen> {
     */
     //return response;
     //UPI_INDIA_FINAL_RESPONSE: txnId=SBI0c9a585cae4c4607b2519975899e87f9&responseCode=UP00&Status=SUCCESS&txnRef=TXNF0D21F8C7E15
-    String response = await upi.startTransaction();
+    String response = await request.startTransaction();
     if (response != null) {
       //response = 'UPI_INDIA_FINAL_RESPONSE: txnId=SBI0c9a585cae4c4607b2519975899e87f9&responseCode=UP00&Status=SUCCESS&txnRef=TXNF0D21F8C7E15';
       response = response + '&amount=' + request.amount.toString() + '&currency=' + request.currency;
@@ -189,8 +192,21 @@ class _UPIScreenState extends State<UPIScreen> {
                               setState(() {
                                 _isAmountEditable = !_isAmountEditable;
                               });
+                              if (_amountController.text.isEmpty) {
+                                    setState(() {
+                                      _message = 'You must pay at least 10% of the total campaign value and the payable amount cannot be empty.';
+                                    });
+                                    Fluttertoast.showToast(
+                                        msg: _message,
+                                        toastLength: Toast.LENGTH_LONG,
+                                        gravity: ToastGravity.BOTTOM,
+                                        timeInSecForIosWeb: 1,
+                                        backgroundColor: Colors.red,
+                                        textColor: Colors.white,
+                                        fontSize: 16.0);
+                              } else {
                               if (!_isAmountEditable) {
-                                final double MIN_PERCENTAGE = 0.1;
+                                const double MIN_PERCENTAGE = 0.1;
                                 final double value = double.parse(_amountController.text);
                                   if (value < (request.amount * MIN_PERCENTAGE)) {
                                     setState(() {
@@ -209,6 +225,7 @@ class _UPIScreenState extends State<UPIScreen> {
                                       _message = null;
                                     });
                                   }
+                              }
                               }
                             },
                           ),

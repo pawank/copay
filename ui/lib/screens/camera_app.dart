@@ -383,8 +383,9 @@ class _CameraAppHomeState extends State<CameraAppHome>
     StorageUploadTask uploadTask = firebaseStorageRef.putFile(image);
     StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
     setState(() {
-      print(title);
+      //print(title);
       //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
+    });
       Fluttertoast.showToast(
           msg: title,
           toastLength: Toast.LENGTH_LONG,
@@ -393,7 +394,6 @@ class _CameraAppHomeState extends State<CameraAppHome>
           backgroundColor: Colors.black54,
           textColor: Colors.white,
           fontSize: 16.0);
-    });
   }
 
 

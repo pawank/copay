@@ -1,5 +1,5 @@
 name: copay
-description: Payments for a noble cause
+description: Donation with Trust
 
 # The following defines the version and build number for your application.
 # A version number is three numbers separated by dots, like 1.2.43
@@ -57,6 +57,7 @@ dependencies:
   upi_india: 1.1.2
   upi_pay: 0.2.1
   loader: 0.4.0
+  #sliding_up_panel: ^1.0.2
   flutter:
     sdk: flutter
 

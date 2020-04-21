@@ -741,62 +741,8 @@ await Firestore.instance.runTransaction((Transaction tx) async {
             return Future.value(data);
 }
 
-  Future<void> _onItemTapped(int index) async {
-    //print('Tapped for action');
-  setState(() {
-    _selectedIndex = index;
-  });
-  switch(_selectedIndex) {
-    case 0:
-    //Navigator.of(context).pop();
-            Navigator.push(
-              context,
-              MaterialPageRoute<void>(
-                builder: (context) {
-                  return LandingPage(title: 'CoPay',);
-                },
-              ),
-            );
-      break;
-      case 1:
-      String paystatus = getPaymentDone();
-      if (paystatus == 'SUCCESS') {
-        String msg = 'Paid ${_requestCall.currency} ${_requestCall.amount}';
-        if (_requestCall.paymentOn != null) {
-                          DateTime dt = _requestCall.paymentOn.toDate();
-                          String date = new DateFormat.yMMMMEEEEd('en_US').format(dt);
-          msg = msg + ' on $date';
-        }
-                            Fluttertoast.showToast(
-                                msg: msg,
-                                toastLength: Toast.LENGTH_LONG,
-                                gravity: ToastGravity.BOTTOM,
-                                timeInSecForIosWeb: 1,
-                                backgroundColor: Colors.green,
-                                textColor: Colors.white,
-                                fontSize: 16.0);
-      } else {
-    UpiIndia upi = new UpiIndia(
-      app: UpiIndiaApps.GooglePay,
-      receiverUpiId: _requestCall.upiId,
-      receiverName: _requestCall.owner != null ? _requestCall.owner['name'] : user.displayName,
-      transactionRefId: 'TXN${_requestCall.code}',
-      transactionNote: 'Purpose: ${_requestCall.purpose}',
-      amount: _requestCall.amount,
-    );
-    callUpiPayment(upi);
-      }
-        break;
-      case 2:
-                      String amttext = '${_requestCall.currency} ${_requestCall.amount}';
-                      if (_requestCall.mediaUrl != null) {
-                      shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
 
-                      } else {
-                      share(_requestCall.name, _requestCall.purpose, '', amttext);
-                      }
-      break;
-      case 3:
+Future<void> shareViaContactOrApps() async {
       final perm = await checkAndRequestPermissionForContacts();
       if (perm) {
 
@@ -903,6 +849,74 @@ users.take(1).forEach((c) async {
                                 textColor: Colors.white,
                                 fontSize: 16.0);
       }
+}
+
+  Future<void> _onItemTapped(int index) async {
+    //print('Tapped for action');
+  setState(() {
+    _selectedIndex = index;
+  });
+  switch(_selectedIndex) {
+    case 0:
+    //Navigator.of(context).pop();
+            Navigator.push(
+              context,
+              MaterialPageRoute<void>(
+                builder: (context) {
+                  return LandingPage(title: 'CoPay',);
+                },
+              ),
+            );
+      break;
+      case 1:
+      String paystatus = getPaymentDone();
+      if (paystatus == 'SUCCESS') {
+        String msg = 'Paid ${_requestCall.currency} ${_requestCall.amount}';
+        if (_requestCall.paymentOn != null) {
+                          DateTime dt = _requestCall.paymentOn.toDate();
+                          String date = new DateFormat.yMMMMEEEEd('en_US').format(dt);
+          msg = msg + ' on $date';
+        }
+                            Fluttertoast.showToast(
+                                msg: msg,
+                                toastLength: Toast.LENGTH_LONG,
+                                gravity: ToastGravity.BOTTOM,
+                                timeInSecForIosWeb: 1,
+                                backgroundColor: Colors.green,
+                                textColor: Colors.white,
+                                fontSize: 16.0);
+      } else {
+    UpiIndia upi = new UpiIndia(
+      app: UpiIndiaApps.GooglePay,
+      receiverUpiId: _requestCall.upiId,
+      receiverName: _requestCall.owner != null ? _requestCall.owner['name'] : user.displayName,
+      transactionRefId: 'TXN${_requestCall.code}',
+      transactionNote: 'Purpose: ${_requestCall.purpose}',
+      amount: _requestCall.amount,
+    );
+    callUpiPayment(upi);
+      }
+        break;
+      case 2:
+                      final shareOrDonor = await PlatformAlertDialog(
+                        title: 'Share with Donor via',
+                        content:
+                            'Your contacts or\nWhatsapp/Facebook etc',
+                        cancelActionText: 'Others',
+                        defaultActionText: 'Donor',
+                      ).show(context);
+                      if (!shareOrDonor) {
+                      String amttext = '${_requestCall.currency} ${_requestCall.amount}';
+                      if (_requestCall.mediaUrl != null) {
+                      shareFile(_requestCall.name, _requestCall.purpose, _mediaUrl, amttext);
+
+                      } else {
+                      share(_requestCall.name, _requestCall.purpose, '', amttext);
+                      }
+
+                      } else {
+                          await shareViaContactOrApps();
+                      }
       break;
 
       default:
@@ -929,19 +943,29 @@ users.take(1).forEach((c) async {
 
     return MaterialApp(
       debugShowCheckedModeBanner: false,
+      /*
+      theme: ThemeData(
+        primaryColor: Colors.blue[900],
+        accentColor: Colors.amber,
+        accentColorBrightness: Brightness.dark
+      ),
+      */
+      theme: ThemeData(primarySwatch: Colors.indigo),
       home: Container(
+        color: Theme.of(context).primaryColor,
         child: 
         new WillPopScope(
     onWillPop: () async => true,
     child: 
         Scaffold(
           backgroundColor: Colors.white,
+          
           appBar: AppBar(
             title: Text(
               requestOrDonation == 'request' ? 'Raise A Request' : 'Donation Request',
               style: TextStyle(fontSize: 20, color: Colors.white),
             ),
-            backgroundColor: Colors.blue,
+            //backgroundColor: Colors.blue,
             elevation: 0,
             leading: new IconButton(
               icon: new Icon(
@@ -984,7 +1008,8 @@ users.take(1).forEach((c) async {
           return*/ 
           _isLoading == true ? LoadingScreen(message: _loadingMessage,) :
           SingleChildScrollView(
-            child: Column(
+            child: 
+            Column(
               mainAxisAlignment: MainAxisAlignment.start,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: <Widget>[
@@ -1044,6 +1069,7 @@ users.take(1).forEach((c) async {
                         //initialValue: fullname,
                       ),
                       SizedBox(height: 10),
+                      /*
                       CurrencyPickerDropdown(
                         initialValue: 'in',
                         itemBuilder: _buildDropdownItem,
@@ -1061,6 +1087,7 @@ users.take(1).forEach((c) async {
                           });
                         },
                       ),
+                      */
                       TextFormField(
                         controller: _amountController,
                         enabled: _saveEnabled,
@@ -1524,8 +1551,8 @@ users.take(1).forEach((c) async {
                     )*/
                   : 
                     RaisedButton(
-                      color: Colors.blue,
-                      padding: const EdgeInsets.only(top: 8, bottom: 8),
+                      color: Colors.indigo,
+                      padding: const EdgeInsets.only(top: 10, bottom: 10),
                       child: Text('Save Request',style:
                         TextStyle(
                           fontFamily: 'worksans',
@@ -1703,11 +1730,13 @@ Firestore.instance.runTransaction((Transaction tx) async {
               activeIcon: Icon(Icons.share),
               title: Text('Share'),
             ),
+            /*
             BottomNavigationBarItem(
               icon: Icon(Icons.send),
               activeIcon: Icon(Icons.send),
               title: Text('Donor'),
             ),
+            */
           ],
           currentIndex: _selectedIndex,
           onTap: _onItemTapped,
