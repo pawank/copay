@@ -214,7 +214,7 @@ class LandingPage extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         Container(
-                          padding: EdgeInsets.all(21),
+                          padding: EdgeInsets.all(15),
                           color: Theme.of(context).primaryColor,
                           child: Column(
                             children: <Widget>[
@@ -268,7 +268,7 @@ class LandingPage extends StatelessWidget {
                                 ],
                               ),
                               SizedBox(
-                                height: 15.0,
+                                height: 10.0,
                               ),
                               //SendReceiveSwitch(),
                             ],
@@ -306,7 +306,7 @@ class LandingPage extends StatelessWidget {
                   ),
                   Expanded(
                     child: Container(
-                      padding: EdgeInsets.all(21.0),
+                      padding: EdgeInsets.all(10.0),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         mainAxisSize: MainAxisSize.max,
@@ -425,6 +425,8 @@ class LandingPage extends StatelessWidget {
             } else if (snapshot.hasError) {
               children = generateUI(context, user, null);
             } else {
+              children = LoadingScreen();
+              /*
               children = Column(
                 children: <Widget>[
                   LoadingScreen(),
@@ -434,6 +436,7 @@ class LandingPage extends StatelessWidget {
                   )
                 ],
               );
+              */
             }
             return children;
           },
