@@ -192,6 +192,7 @@ class _DonationScreenState extends State<DonationScreen> {
                             imageUrl: getFinalUrl(obj.imageUrl),
                             mediaUrl: getFinalUrl(obj.mediaUrl),
                             user: user,
+                            feedback: obj.feedback,
                             requestOrDonation: 'donation'
                           );
                         } else {

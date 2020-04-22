@@ -22,8 +22,12 @@ class DonationFeedbackRepo extends ChangeNotifier {
       String code, String donorEmail) async {
     var result = await _api.getDataCollection();
     _profiles = result.documents
-        .where((doc) => code != null && doc.data['code'] == code && code.isNotEmpty)
-        .where((doc) => donorEmail != null && doc.data['donor']['email'] == donorEmail && donorEmail.isNotEmpty)
+        .where((doc) =>
+            code != null && doc.data['donationCode'] == code && code.isNotEmpty)
+        .where((doc) =>
+            donorEmail != null &&
+            doc.data['feedbackBy'] == donorEmail &&
+            donorEmail.isNotEmpty)
         .map((doc) => DonationFeedback.fromMap(doc.data, doc.documentID))
         .toList();
     return _profiles;
@@ -42,14 +46,15 @@ class DonationFeedbackRepo extends ChangeNotifier {
     await _api.removeDocument(id);
     return;
   }
-  Future<void> removeRequestByCode(
-      String code) async {
+
+  Future<void> removeRequestByCode(String code) async {
     var result = await _api.getDataCollection();
     result.documents
-        .where((doc) => code != null && doc.data['donationCode'] == code && code.isNotEmpty)
+        .where((doc) =>
+            code != null && doc.data['donationCode'] == code && code.isNotEmpty)
         .forEach((doc) {
-          removeDonationFeedback(doc.documentID);
-        });
+      removeDonationFeedback(doc.documentID);
+    });
   }
 
   Future updateDonationFeedback(DonationFeedback data, String id) async {
@@ -67,7 +72,8 @@ class DonationFeedbackRepo extends ChangeNotifier {
     final resultF = _api.getDataCollection();
     return resultF.then((result) {
       final _profiles = result.documents
-          .where((doc) => email != null && doc['feedbackBy'] == email && email.isNotEmpty)
+          .where((doc) =>
+              email != null && doc['feedbackBy'] == email && email.isNotEmpty)
           .map((doc) => DonationFeedback.fromMap(doc.data, doc.documentID))
           .toList();
       return _profiles;
@@ -76,12 +82,15 @@ class DonationFeedbackRepo extends ChangeNotifier {
 
   Future<bool> saveDonationFeedback(DonationFeedback data) async {
     final List<DonationFeedback> users =
-        await fetchDonationFeedbacksByCodeAndEmail(data.donationCode, data.feedbackBy);
+        await fetchDonationFeedbacksByCodeAndEmail(
+            data.donationCode, data.feedbackBy);
     if (users.isEmpty) {
       return _api.addDocument(data.toJson()).then((v) => v.documentID != null);
     } else {
-      users.forEach((up) async { 
-        await _api.updateDocument(data.toJson(), up.userId).then((v) => up.userId);
+      users.forEach((up) async {
+        await _api
+            .updateDocument(data.toJson(), up.userId)
+            .then((v) => up.userId);
       });
       //return Future.value(users.map((f) => f.email).toList()[0]);
       return Future.value(true);

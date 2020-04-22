@@ -4,6 +4,7 @@ import 'package:copay/screens/raise_a_request.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_rating_bar/flutter_rating_bar.dart';
 
 enum RequestSummaryType { sent, received, pending, failed }
 
@@ -20,11 +21,12 @@ class RequestSummary extends StatelessWidget {
       this.imageUrl,
       this.mediaUrl,
       this.user,
+      this.feedback,
       this.requestOrDonation
       })
       : super(key: key);
   final RequestSummaryType txnType;
-  final String code, amount, currency, info, date, receiver, imageUrl, mediaUrl, requestOrDonation;
+  final String code, amount, currency, info, date, receiver, imageUrl, mediaUrl, feedback, requestOrDonation;
   final User user;
   
   Widget getMediaIconType(String value) {
@@ -189,6 +191,14 @@ class RequestSummary extends StatelessWidget {
                     ),
                     if (imageUrl != null) getIconType(imageUrl),
                     if (mediaUrl != null) getMediaIconType(mediaUrl),
+                    if ((feedback != null) && (feedback.isNotEmpty))
+                      Row(children: <Widget>[
+                        Icon(Icons.comment, size: 15,),
+                        Padding(
+                          padding: EdgeInsets.only(left: 3),
+                          child:Text(feedback, style: TextStyle(color: Colors.indigo),),
+                        ),
+                      ],),
                   ],
                 ),
               ],

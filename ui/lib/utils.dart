@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'dart:ui';
 
+import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 int getColorHexFromStr(String colorStr) {
   colorStr = 'FF' + colorStr;
@@ -46,3 +50,44 @@ MaterialColor getMaterialColor(String hexColor) {
   final MaterialColor colorCustom = MaterialColor(0xFFFF9933, color);
   return colorCustom;
 }
+
+
+  String getImageFilename(String email, File _image) {
+    if ((_image != null) && (email != null)) {
+      String fileName = _image.path.split('/').reversed.first;
+      String fullfileName = email != null ? email : 'files';
+      fullfileName = fullfileName + '/' + fileName;
+      return fullfileName;
+    }
+    return null;
+  }
+
+
+  Future<String> uploadPic(String email, File _image, String imageUrl, bool isVideo) async {
+    File image = _image;
+    String title = 'Profile Picture uploaded';
+    if ((imageUrl != null) && (imageUrl.isNotEmpty)) {
+        image = new File(imageUrl);
+        title = 'Photo Uploaded';
+        if (isVideo) {
+          title = 'Media Uploaded';
+        }
+    }
+    if (image != null) {
+
+    String fileName = getImageFilename(email, image);
+    StorageReference firebaseStorageRef =
+        FirebaseStorage.instance.ref().child(fileName);
+    StorageUploadTask uploadTask = firebaseStorageRef.putFile(image);
+    StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
+    return Future.value(fileName);
+    }
+    return Future.value(null);
+  }
+  
+  Future<void> resetCameraAndVideoPaths(
+      String imagePath, String videoPath) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('camera_image_path');
+      await prefs.remove('video_image_path');
+  }

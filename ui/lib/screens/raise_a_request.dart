@@ -8,6 +8,7 @@ import 'package:contact_picker/contact_picker.dart' as contact_select;
 import 'package:contacts_service/contacts_service.dart';
 import 'package:copay/app/landing_page.dart';
 import 'package:copay/common_widgets/avatar.dart';
+import 'package:copay/common_widgets/fullscreen_images.dart';
 import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/common_widgets/video_player_app.dart';
 import 'package:copay/constants/keys.dart';
@@ -24,6 +25,7 @@ import 'package:copay/services/donation_api_impl.dart';
 import 'package:copay/services/enhanced_user_api.dart';
 import 'package:copay/services/enhanced_user_impl.dart';
 import 'package:copay/services/request_call_impl.dart';
+import 'package:copay/utils.dart';
 import 'package:currency_pickers/country.dart';
 import 'package:currency_pickers/currency_picker_dropdown.dart';
 import 'package:currency_pickers/utils/utils.dart';
@@ -42,6 +44,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'package:upi_india/upi_india.dart';
 import 'package:uuid/uuid.dart';
 import 'package:video_player/video_player.dart';
+import 'package:video_thumbnail/video_thumbnail.dart' as VT;
 import '../util.dart';
 import 'package:community_material_icon/community_material_icon.dart';
 import 'dart:async';
@@ -54,6 +57,8 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import 'dart:io';
+//For getTemporaryDirectory
+import 'package:path_provider/path_provider.dart';
 
 class RaiseRequest extends StatefulWidget {
   RaiseRequest({@required this.user, @required this.code, this.callbackCamera, this.callbackVideo, @required this.requestOrDonation});
@@ -121,6 +126,8 @@ class _RaiseRequestState extends State<RaiseRequest> {
   int _radioValue1 = -1;
   String feedbackBy;
   String feedbackOwner;
+  Image imageThumbnail;
+  Image videoThumbnail;
   
   void _handleRadioValueChange1(int value) {
     setState(() {
@@ -134,6 +141,57 @@ class _RaiseRequestState extends State<RaiseRequest> {
 
       }
     });
+  }
+
+  Future<void> generateThumbnails(String urlOrPath, String type) async {
+    final int WIDTH = 150;
+    if ((urlOrPath != null) && (urlOrPath.isNotEmpty)) {
+      if (urlOrPath.startsWith('/')) {
+        if (type == 'photo') {
+          imageThumbnail = Image.file(new File(urlOrPath));
+        } else {
+          final uint8list = await VT.VideoThumbnail.thumbnailData(
+            video: urlOrPath,
+            imageFormat: VT.ImageFormat.PNG,
+            maxWidth:
+                WIDTH, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
+            quality: 75,
+          );
+          videoThumbnail = Image.memory(uint8list);
+        }
+      } else {
+        if (type == 'photo') {
+          imageThumbnail = Image.network(urlOrPath);
+        } else {
+          if (urlOrPath.startsWith('https') || urlOrPath.startsWith('http')) {
+            videoThumbnail = Image.asset('assets/copay_transparent_logo.png');
+          } else {
+            final videopath = await VT.VideoThumbnail.thumbnailFile(
+              video: urlOrPath,
+              thumbnailPath: (await getTemporaryDirectory()).path,
+              imageFormat: VT.ImageFormat.WEBP,
+              //maxHeight: 100, // specify the height of the thumbnail, let the width auto-scaled to keep the source aspect ratio
+              maxWidth: WIDTH,
+              quality: 75,
+            );
+            final uint8list = await VT.VideoThumbnail.thumbnailData(
+              video: videopath,
+              imageFormat: VT.ImageFormat.PNG,
+              maxWidth:
+                  WIDTH, // specify the width of the thumbnail, let the height auto-scaled to keep the source aspect ratio
+              quality: 75,
+            );
+            videoThumbnail = Image.memory(uint8list);
+          }
+        }
+      }
+      if (mounted) {
+      setState(() {
+        imageThumbnail = imageThumbnail;
+        videoThumbnail = videoThumbnail;
+      });
+      }
+    }
   }
 
   //image / video
@@ -165,6 +223,17 @@ class _RaiseRequestState extends State<RaiseRequest> {
     const String curr = 'INR ';
     return curr;
   }
+  
+  Future getImage() async {
+    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
+
+    setState(() {
+      _image = image;
+      print('Image Path $_image');
+    });
+      uploadPic(user.email, _image,null, false);
+  }
+
 
   Future<void> getRequestByCodeStream(String code) {
     final streamQS = Firestore.instance
@@ -256,9 +325,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
       firebaseStorageRefF.then((firebaseStorageRef) async {
         final dynamic url = await firebaseStorageRef.getDownloadURL();
         if (url != null) {
-          setState(() {
-            _profileUrl = url;
-          });
+            if (mounted) {
+            setState(() {
+              _profileUrl = url;
+            });
+            }
           return _profileUrl;
         }
       });
@@ -274,9 +345,12 @@ class _RaiseRequestState extends State<RaiseRequest> {
       firebaseStorageRefF.then((firebaseStorageRef) async {
         final dynamic url = await firebaseStorageRef.getDownloadURL();
         if (url != null) {
+            generateThumbnails(url, 'photo');
+            if (mounted) {
           setState(() {
             _imageUrl = url;
           });
+            }
           return _imageUrl;
         }
       });
@@ -292,9 +366,12 @@ class _RaiseRequestState extends State<RaiseRequest> {
       firebaseStorageRefF.then((firebaseStorageRef) async {
         final dynamic url = await firebaseStorageRef.getDownloadURL();
         if (url != null) {
+            generateThumbnails(url, 'video');
+            if (mounted) {
           setState(() {
             _mediaUrl = url;
           });
+            }
           return _mediaUrl;
         }
       });
@@ -345,12 +422,15 @@ class _RaiseRequestState extends State<RaiseRequest> {
               status: 'Pending');
         }
         users.forEach((u) {
-          setState(() {
-            _requestCall = u;
-            //_emailController.text = u.email;
+            //await loadImageFromFirebase(u, null);
+            //await loadImageFromFirebase(u, 'feedback');
+            //await loadImageFromFirebase(u, 'video');
             loadImageFromFirebase(u, null);
             loadImageFromFirebase(u, 'feedback');
             loadImageFromFirebase(u, 'video');
+          setState(() {
+            _requestCall = u;
+            //_emailController.text = u.email;
       _saveEnabled = _requestCall.txnType != null && _requestCall.txnType != 'received';
   _titleController = TextEditingController(text: _requestCall.purpose);
   _fullnameController = TextEditingController(text: _requestCall.name);
@@ -483,16 +563,6 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return Icon(Icons.check, color: Colors.black);
   }
 
-  String getImageFilename(File _image) {
-    if (_image != null) {
-      String fileName = _image.path.split('/').reversed.first;
-      String fullfileName = user.email != null ? user.email : 'files';
-      fullfileName = fullfileName + '/' + fileName;
-      return fullfileName;
-    }
-    return null;
-  }
-
   String getFeedbackImage() {
     if (_imageUrl != null) {
       return _imageUrl;
@@ -503,55 +573,6 @@ class _RaiseRequestState extends State<RaiseRequest> {
     return null;
   }
 
-  Future uploadPic(String imageUrl, bool isVideo) async {
-    File image = _image;
-    String title = 'Profile Picture uploaded';
-    if (imageUrl != null) {
-        image = new File(imageUrl);
-        title = 'Photo Uploaded';
-        if (isVideo) {
-          title = 'Media Uploaded';
-        }
-    }
-    if (image != null) {
-
-    String fileName = getImageFilename(image);
-    StorageReference firebaseStorageRef =
-        FirebaseStorage.instance.ref().child(fileName);
-    StorageUploadTask uploadTask = firebaseStorageRef.putFile(image);
-    StorageTaskSnapshot taskSnapshot = await uploadTask.onComplete;
-    setState(() {
-      print(title);
-      //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
-      Fluttertoast.showToast(
-          msg: title,
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black54,
-          textColor: Colors.white,
-          fontSize: 16.0);
-    });
-    }
-  }
-  
-  Future<void> resetCameraAndVideoPaths(
-      String imagePath, String videoPath) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.remove('camera_image_path');
-      await prefs.remove('video_image_path');
-  }
-
-
-  Future getImage() async {
-    var image = await ImagePicker.pickImage(source: ImageSource.gallery);
-
-    setState(() {
-      _image = image;
-      print('Image Path $_image');
-      uploadPic(null, false);
-    });
-  }
 
   Widget _buildDropdownItem(Country country) => Container(
         child: Row(
@@ -1455,6 +1476,8 @@ users.take(1).forEach((c) async {
                       SizedBox(height: 10),
                       TextFormField(
                         controller: _medialController,
+                        enabled: true,
+                        readOnly: true,
                         keyboardType: TextInputType.text,
                         textInputAction: TextInputAction.next,
                         decoration: InputDecoration(
@@ -1463,7 +1486,7 @@ users.take(1).forEach((c) async {
                           labelStyle: TextStyle(color: Colors.black),
                           errorStyle: TextStyle(color: Colors.red),
                           enabledBorder: UnderlineInputBorder(
-                            borderSide: _medialController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.orangeAccent),
+                            borderSide: _medialController.text != '' ? BorderSide(color: Colors.black) : BorderSide(color: Colors.black),
                           ),
                           focusedBorder: UnderlineInputBorder(
                             borderSide: BorderSide(color: Colors.black),
@@ -1477,7 +1500,7 @@ users.take(1).forEach((c) async {
                                 print('Starting media');
                 final route = MaterialPageRoute<void>(
                   builder: (context) {
-                    return AppVideoPlayer(title: _mediaUrl != null ? 'Playing ${_mediaUrl}' : 'Playing', mediaUrl: _mediaUrl,);
+                    return AppVideoPlayer(title: mediaUrl != null ? 'Playing ${mediaUrl}' : 'Playing', mediaUrl: mediaUrl,);
                   },
                 );
              Navigator.of(context).push(route);
@@ -1493,6 +1516,7 @@ users.take(1).forEach((c) async {
                         //initialValue: fullname,
                       ),
                 SizedBox(height: 10),
+                /*
                 if (isShowAvatar)
                   feedbackurl != null ?
                   Avatar(
@@ -1514,11 +1538,12 @@ users.take(1).forEach((c) async {
                         ),
                       ),
                     ),
+                    */
                   Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: <Widget>[
                 Text(
-                  callbackCameraLink != null ? callbackVideoLink != null ? 'Saved Photo and Media' : 'Saved Photo': 'No Photo Found',
+                  callbackCameraLink != null ? callbackVideoLink != null ? 'Saved Photo and Media' : 'Saved Photo': imageThumbnail != null || videoThumbnail != null ? 'Saved Photo and Media' : 'No Photo Found',
                   semanticsLabel: 'Your uploaded media for the campaign',
                   style: TextStyle(
                       fontFamily: 'worksans',
@@ -1545,7 +1570,84 @@ users.take(1).forEach((c) async {
                       },
                     ),
                   ),
-                ]),
+                ],),
+                                  Row(
+                                      crossAxisAlignment:
+                                          CrossAxisAlignment.start,
+                                      children: <Widget>[
+                                        if (imageThumbnail != null)
+                                          Center(
+                                            child: GestureDetector(
+                                              child: Container(
+                                                padding: EdgeInsets.all(5),
+                                                width: 150,
+                                                child: Stack(
+                                                  children: <Widget>[
+                                                    imageThumbnail,
+                                                    Positioned(
+                                                      left: 50,
+                                                      top: 50,
+                                                      child: Icon(
+                                                        Icons.image,
+                                                        size: 50,
+                                                        color: Colors.indigo,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                final route =
+                                                    MaterialPageRoute<void>(
+                                                  builder: (context) {
+                                                    return FullScreenPage(
+                                                        _imageUrl);
+                                                  },
+                                                );
+                                                Navigator.of(context)
+                                                    .push(route);
+                                              },
+                                            ),
+                                          ),
+                                        if (videoThumbnail != null)
+                                          Center(
+                                            child: GestureDetector(
+                                              child: Container(
+                                                padding: EdgeInsets.all(5),
+                                                width: 150,
+                                                child: Stack(
+                                                  children: <Widget>[
+                                                    videoThumbnail,
+                                                    Positioned(
+                                                      left: 50,
+                                                      top: 50,
+                                                      child: Icon(
+                                                        Icons.play_arrow,
+                                                        size: 50,
+                                                        color: Colors.indigo,
+                                                      ),
+                                                    ),
+                                                  ],
+                                                ),
+                                              ),
+                                              onTap: () {
+                                                final route =
+                                                    MaterialPageRoute<void>(
+                                                  builder: (context) {
+                                                    return AppVideoPlayer(
+                                                      title: _mediaUrl != null
+                                                          ? 'Playing ${_mediaUrl}'
+                                                          : 'Playing',
+                                                      mediaUrl: _mediaUrl,
+                                                    );
+                                                  },
+                                                );
+                                                Navigator.of(context)
+                                                    .push(route);
+                                              },
+                                            ),
+                                          ),
+                                      ],),
                 /*
                       SizedBox(height: 10),
                       TextFormField(
@@ -1668,11 +1770,11 @@ users.take(1).forEach((c) async {
                               individual ? individual : _requestCall.individual,
                           amount: _amountController.numberValue,
                           currency: _amountController.leftSymbol,
-                          profileUrl: getImageFilename(_image),
+                          profileUrl: getImageFilename(user.email, _image),
                           website: _gstinController.text.toLowerCase(),
                           upiId: _upiIdController.text,
-                          imageUrl: callbackCameraLink != null ? getImageFilename(File(callbackCameraLink)) : _requestCall.imageUrl,
-                          mediaUrl: callbackVideoLink != null ? getImageFilename(File(callbackVideoLink)) : _requestCall.mediaUrl,
+                          imageUrl: callbackCameraLink != null ? getImageFilename(user.email, File(callbackCameraLink)) : _requestCall.imageUrl,
+                          mediaUrl: callbackVideoLink != null ? getImageFilename(user.email, File(callbackVideoLink)) : _requestCall.mediaUrl,
                           status: 'Created',
                           owner: owner
                         );
@@ -1694,8 +1796,8 @@ users.take(1).forEach((c) async {
                         _isLoading = true;
                       });
                       
-                        await uploadPic(callbackCameraLink, false);
-                        await uploadPic(callbackVideoLink, true);
+                        await uploadPic(user.email, _image, callbackCameraLink, false);
+                        await uploadPic(user.email, _image, callbackVideoLink, true);
                           status = await profileRepo.saveRequestCall(data);
                           if (status) {
                             final userRepo = Provider.of<EnhancedProfileRepo>(context, listen: false);

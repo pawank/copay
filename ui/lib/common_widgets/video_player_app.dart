@@ -28,11 +28,10 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
   @override
   void initState() {
     super.initState();
-    String sample = 'https://flutter.github.io/assets-for-api-docs/assets/videos/butterfly.mp4';
     _videoPlayerController1 = VideoPlayerController.network(mediaUrl);
     _chewieController = ChewieController(
       videoPlayerController: _videoPlayerController1,
-      //aspectRatio: 3 / 2,
+      aspectRatio: 3 / 2,
       autoPlay: true,
       looping: true,
       // Try playing around with some of these other options:
@@ -69,6 +68,15 @@ class _AppVideoPlayerState extends State<AppVideoPlayer> {
       home: Scaffold(
         appBar: AppBar(
           title: Text(widget.title),
+            leading: new IconButton(
+              icon: new Icon(
+                Icons.arrow_back,
+                color: Colors.white,
+              ),
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+            ),
         ),
         body: Column(
           children: <Widget>[
