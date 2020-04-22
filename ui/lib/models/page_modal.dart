@@ -6,14 +6,14 @@ class PageModel {
 
 List<PageModel> pages = [
   PageModel(
-    assetImagePath: 'assets/android/main.jpeg',
+    assetImagePath: 'assets/android/main.png',
     text: 'Your landing dashboard.\n\nCreate new campaign, share and donate.',
   ),
   PageModel(
-    assetImagePath: 'assets/android/requests.jpeg',
+    assetImagePath: 'assets/android/raise_request.png',
     text: 'Raise a Request',
   ),
   PageModel(
-      assetImagePath: 'assets/android/pay.jpeg',
+      assetImagePath: 'assets/android/pay.png',
       text: 'Share with friends and \nPay the beneficiary'),
 ];
