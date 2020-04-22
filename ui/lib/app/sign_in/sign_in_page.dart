@@ -203,14 +203,6 @@ class SignInPage extends StatelessWidget {
               color: Colors.teal[700],
             ),*/
             SizedBox(height: 8),
-            SignInButton(
-              key: emailLinkButtonKey,
-              text: Strings.signInWithEmailLink,
-              onPressed: isLoading ? null : () => _signInWithEmailLink(context),
-              textColor: Colors.white,
-              color: Colors.indigo,
-            ),
-            SizedBox(height: 8),
             SocialSignInButton(
               key: googleButtonKey,
               assetName: 'assets/go-logo.png',
@@ -219,13 +211,22 @@ class SignInPage extends StatelessWidget {
               color: Colors.white,
             ),
             SizedBox(height: 8),
+            SignInButton(
+              key: emailLinkButtonKey,
+              text: Strings.signInWithEmailLink,
+              onPressed: isLoading ? null : () => _signInWithEmailLink(context),
+              textColor: Colors.black,
+              color: Colors.white,
+            ),
+            SizedBox(height: 8),
             SocialSignInButton(
               key: facebookButtonKey,
               assetName: 'assets/fb-logo.png',
               text: Strings.signInWithFacebook,
-              textColor: Colors.white,
+              textColor: Colors.black,
               onPressed: isLoading ? null : () => _signInWithFacebook(context),
-              color: Color(0xFF334D92),
+              //color: Color(0xFF334D92),
+              color: Colors.white,
             ),
             /*
             Text(

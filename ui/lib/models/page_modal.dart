@@ -15,5 +15,5 @@ List<PageModel> pages = [
   ),
   PageModel(
       assetImagePath: 'assets/android/pay.png',
-      text: 'Share with friends and \nPay the beneficiary'),
+      text: 'Share with friends and \nPay the beneficiary via UPI'),
 ];

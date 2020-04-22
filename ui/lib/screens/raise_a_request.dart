@@ -642,7 +642,7 @@ Future<String> _asyncInputDialog(BuildContext context, String title) async {
                 child: new TextField(
               autofocus: true,
               decoration: new InputDecoration(
-                  labelText: 'Friend Email Address', hintText: 'No email found in your contact. Please provide the same.'),
+                  labelText: 'Friend Email Address', hintText: 'Please provide contact email.'),
               onChanged: (value) {
                 email = value;
               },
@@ -809,12 +809,12 @@ users.take(1).forEach((c) async {
     String email = null;
     if (c.emails != null) {
       if (c.emails.isNotEmpty) {
-        email = c.emails.firstWhere((e) => e.value.isNotEmpty).value;
+        //email = c.emails.firstWhere((e) => e.value.isNotEmpty).value;
       }
     }
     if ((email == null) || (email.isEmpty)) {
       final emailResult = await _asyncInputDialog(context, 'Found ${users.length} friends with matching name.');
-      print(emailResult);
+      //print(emailResult);
       email = _friendContactEmail;
     }
     final owner = {
@@ -840,7 +840,7 @@ users.take(1).forEach((c) async {
                       final yesno = await PlatformAlertDialog(
                         title: 'Send Donation Request?',
                         content:
-                            'You are asking ${c.displayName} for donation.',
+                            'You are asking, \"${c.displayName}\" for donation.',
                         cancelActionText: Strings.cancel,
                         defaultActionText: 'Send',
                       ).show(context);
