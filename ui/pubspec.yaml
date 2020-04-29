@@ -11,7 +11,7 @@ description: Donation with Trust
 # In iOS, build-name is used as CFBundleShortVersionString while build-number used as CFBundleVersion.
 # Read more about iOS versioning at
 # https://developer.apple.com/library/archive/documentation/General/Reference/InfoPlistKeyReference/Articles/CoreFoundationKeys.html
-version: 0.1.1+1
+version: 1.0.0+29
 
 environment:
   sdk: ">=2.7.0 <3.0.0"
@@ -23,7 +23,7 @@ dependencies:
   flutter_facebook_login: ^3.0.0
   apple_sign_in: ^0.1.0
   provider: ^4.0.1
-  firebase_dynamic_links: ^0.5.0+9
+  firebase_dynamic_links: ^0.5.0+11
   rxdart: ^0.23.1
   flutter_secure_storage: ^3.3.1+1
   package_info: ^0.4.0+13
@@ -53,7 +53,7 @@ dependencies:
   chewie: 0.9.10
   share: 0.6.3+6
   flutter_share: 1.0.2+1
-  contact_picker: 0.0.2
+  #contact_picker: 0.0.2
   upi_india: 1.1.2
   upi_pay: 0.2.1
   loader: 0.4.0
@@ -61,6 +61,8 @@ dependencies:
   #zefyr: 0.10.0
   flutter_rating_bar: 3.0.1+1
   video_thumbnail: 0.2.1
+  contact_picker:
+      path: ../../contact_picker 
   flutter:
     sdk: flutter
 

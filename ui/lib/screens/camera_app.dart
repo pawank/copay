@@ -22,11 +22,11 @@ import '../main.dart';
 
 class CameraAppHome extends StatefulWidget {
   CameraAppHome(
-      {
-        @required User user, @required String code,
-        @required RequestCall requestCall});
-      User user;
-      String code;
+      {@required User user,
+      @required String code,
+      @required RequestCall requestCall});
+  User user;
+  String code;
   RequestCall requestCall;
   @override
   _CameraAppHomeState createState() {
@@ -52,10 +52,9 @@ void logError(String code, String message) =>
 
 class _CameraAppHomeState extends State<CameraAppHome>
     with WidgetsBindingObserver {
-  _CameraAppHomeState(this.user, this.code,
-      this.requestCall);
-      final User user;
-      final String code;
+  _CameraAppHomeState(this.user, this.code, this.requestCall);
+  final User user;
+  final String code;
   RequestCall requestCall;
   CameraController controller;
   String imagePath;
@@ -88,8 +87,7 @@ class _CameraAppHomeState extends State<CameraAppHome>
       if (controller != null) {
         onNewCameraSelected(controller.description);
       }
-    } else {
-    }
+    } else {}
   }
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
@@ -106,9 +104,9 @@ class _CameraAppHomeState extends State<CameraAppHome>
             color: Colors.white,
           ),
           onPressed: () {
-            String data = imagePath != null ? imagePath: '';
+            String data = imagePath != null ? imagePath : '';
             if ((videoPath != null) && (videoPath.isNotEmpty)) {
-                data = data + ';' + videoPath; 
+              data = data + ';' + videoPath;
             }
             Navigator.of(context).pop(data);
           },
@@ -139,23 +137,22 @@ class _CameraAppHomeState extends State<CameraAppHome>
           _toggleAudioWidget(),
           Padding(
             padding: const EdgeInsets.all(5.0),
-            child: 
-            Column(
+            child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: <Widget>[
                 Padding(
                   padding: EdgeInsets.only(left: 20),
                   child: Text('Front and Rear Cameras'),
                 ),
-              
-            Row(
-              mainAxisAlignment: MainAxisAlignment.start,
-              children: <Widget>[
-                _cameraTogglesRowWidget(),
-                _thumbnailWidget(),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  children: <Widget>[
+                    _cameraTogglesRowWidget(),
+                    _thumbnailWidget(),
+                  ],
+                ),
               ],
             ),
-            ],),
           ),
         ],
       ),
@@ -165,23 +162,22 @@ class _CameraAppHomeState extends State<CameraAppHome>
   /// Display the preview from the camera (or a message if the preview is not available).
   Widget _cameraPreviewWidget() {
     if (controller == null || !controller.value.isInitialized) {
-      return GestureDetector(child: 
-      
-      const Text(
-        'Tap a camera',
-        style: TextStyle(
-          color: Colors.white,
-          fontSize: 24.0,
-          fontWeight: FontWeight.w900,
+      return GestureDetector(
+        child: const Text(
+          'Tap a camera',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 24.0,
+            fontWeight: FontWeight.w900,
+          ),
         ),
-      ),
-      onTap: (){
+        onTap: () {
           if ((cameras != null) && (cameras.isNotEmpty)) {
-              if (controller != null) {
-                //onNewCameraSelected(cameras.first);
-              }
+            if (controller != null) {
+              //onNewCameraSelected(cameras.first);
+            }
           }
-      },
+        },
       );
     } else {
       return AspectRatio(
@@ -351,8 +347,24 @@ class _CameraAppHomeState extends State<CameraAppHome>
 
     try {
       await controller.initialize();
-    } on CameraException catch (e) {
-      _showCameraException(e);
+    } on Exception catch (e) {
+      try {
+        controller = CameraController(
+          cameraDescription,
+          ResolutionPreset.medium,
+          enableAudio: enableAudio,
+        );
+
+        // If the controller is updated then update the UI.
+        controller.addListener(() {
+          if (mounted) setState(() {});
+          if (controller.value.hasError) {
+            showInSnackBar('Camera error ${controller.value.errorDescription}');
+          }
+        });
+      } on CameraException catch (e) {
+        _showCameraException(e);
+      }
     }
 
     if (mounted) {
@@ -371,7 +383,6 @@ class _CameraAppHomeState extends State<CameraAppHome>
     }
   }
 
-
   String getImageFilename(File _image) {
     if (_image != null) {
       String fileName = _image.path.split('/').reversed.first;
@@ -382,13 +393,12 @@ class _CameraAppHomeState extends State<CameraAppHome>
     return null;
   }
 
-  
   Future uploadPic(String imageUrl) async {
     File image = null;
     String title = 'Profile Picture uploaded';
     if (imageUrl != null) {
-        image = new File(imageUrl);
-        title = 'Photo Uploaded';
+      image = new File(imageUrl);
+      title = 'Photo Uploaded';
     }
     String fileName = getImageFilename(image);
     StorageReference firebaseStorageRef =
@@ -399,28 +409,31 @@ class _CameraAppHomeState extends State<CameraAppHome>
       //print(title);
       //Scaffold.of(context).showSnackBar(SnackBar(content: Text('Profile Picture Uploaded')));
     });
-      Fluttertoast.showToast(
-          msg: title,
-          toastLength: Toast.LENGTH_LONG,
-          gravity: ToastGravity.BOTTOM,
-          timeInSecForIosWeb: 1,
-          backgroundColor: Colors.black54,
-          textColor: Colors.white,
-          fontSize: 16.0);
+    Fluttertoast.showToast(
+        msg: title,
+        toastLength: Toast.LENGTH_LONG,
+        gravity: ToastGravity.BOTTOM,
+        timeInSecForIosWeb: 1,
+        backgroundColor: Colors.black54,
+        textColor: Colors.white,
+        fontSize: 16.0);
   }
-
 
   void _navigateAndDisplaySelection(BuildContext context) {
     // Navigator.push returns a Future that completes after calling
     // Navigator.pop on the Selection Screen.
     //uploadPic(imagePath);
-                final route = MaterialPageRoute<void>(
-                  builder: (context) {
-                    return RaiseRequest(user: user, code: code, callbackCamera: imagePath, callbackVideo: videoPath);
-                  },
-                );
-             //Navigator.of(context).pop();
-             Navigator.of(context).push(route);
+    final route = MaterialPageRoute<void>(
+      builder: (context) {
+        return RaiseRequest(
+            user: user,
+            code: code,
+            callbackCamera: imagePath,
+            callbackVideo: videoPath);
+      },
+    );
+    //Navigator.of(context).pop();
+    Navigator.of(context).push(route);
   }
 
   void onTakePictureButtonPressed() {
@@ -431,9 +444,9 @@ class _CameraAppHomeState extends State<CameraAppHome>
           videoController?.dispose();
           videoController = null;
           if (imagePath != null) {
-              //requestCall.profileUrl = imagePath;
-              updateCameraAndVideoPaths(imagePath, null);
-              //_navigateAndDisplaySelection(context);
+            //requestCall.profileUrl = imagePath;
+            updateCameraAndVideoPaths(imagePath, null);
+            //_navigateAndDisplaySelection(context);
           }
         });
         if (filePath != null) {
@@ -603,15 +616,14 @@ class _CameraAppHomeState extends State<CameraAppHome>
 
 class CameraApp extends StatefulWidget {
   CameraApp(
-      {
-        @required User user, @required String code,
-        @required RequestCall requestCall});
-      User user;
-      String code;
+      {@required User user,
+      @required String code,
+      @required RequestCall requestCall});
+  User user;
+  String code;
   RequestCall requestCall;
   @override
-  _CameraAppState createState() =>
-      _CameraAppState(user, code, requestCall);
+  _CameraAppState createState() => _CameraAppState(user, code, requestCall);
 }
 
 class _CameraAppState extends State<CameraApp> {

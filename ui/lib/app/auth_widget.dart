@@ -2,6 +2,7 @@ import 'package:copay/app/home_page.dart';
 import 'package:copay/app/landing_page.dart';
 import 'package:copay/common_widgets/loading.dart';
 import 'package:copay/screens/app_tutorial.dart';
+import 'package:copay/screens/deeplinking.dart';
 import 'package:copay/services/auth_service.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -38,6 +39,7 @@ class AuthWidget extends StatelessWidget {
           return Center(
         child:
           userSnapshot.connectionState == ConnectionState.active ? 
+          //userSnapshot.hasData ? LandingPage(title: 'Home') : snapshot.data == false ? SignInPageBuilder() : DeepLinkingScreen() :
           userSnapshot.hasData ? LandingPage(title: 'Home') : snapshot.data == false ? SignInPageBuilder() : AppTutorial() :
           LoadingScreen(message: 'Starting...',),
       );

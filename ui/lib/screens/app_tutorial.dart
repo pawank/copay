@@ -3,6 +3,7 @@ import 'package:copay/models/page_modal.dart';
 import 'package:copay/screens/app_tutorial_view_indicator.dart';
 import 'package:flutter/material.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:copay/screens/deeplinking.dart';
 
 class AppTutorial extends StatelessWidget {
   const AppTutorial({Key key}) : super(key: key);

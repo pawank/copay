@@ -191,3 +191,6 @@ android/app/google-services.json
 
 images/
 ../images/
+
+*.jks
+ui/android/app/key.properties

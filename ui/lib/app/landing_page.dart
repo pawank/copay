@@ -135,7 +135,9 @@ class LandingPage extends StatelessWidget {
     }
     String fullname = user.displayName;
     if (((fullname == null) || (fullname == '')) && (profile != null)) {
-      fullname = profile.name.split(' ').first;
+      if (profile.name != null) {
+        fullname = profile.name.split(' ').first;
+      }
     }
     if ((fullname == null) || (fullname == '')) {
       fullname = user.email;

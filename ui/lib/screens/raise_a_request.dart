@@ -59,6 +59,9 @@ import 'package:flutter/services.dart';
 import 'dart:io';
 //For getTemporaryDirectory
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_dynamic_links/firebase_dynamic_links.dart';
+import 'package:flutter/services.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class RaiseRequest extends StatefulWidget {
   RaiseRequest({@required this.user, @required this.code, this.callbackCamera, this.callbackVideo, @required this.requestOrDonation});
@@ -128,6 +131,72 @@ class _RaiseRequestState extends State<RaiseRequest> {
   String feedbackOwner;
   Image imageThumbnail;
   Image videoThumbnail;
+  String _linkMessage;
+  bool _isCreatingLink = false;
+  String _testString =
+      "To test: long press link and then copy and click from a non-browser "
+      "app. Make sure this isn't being tested on iOS simulator and iOS xcode "
+      "is properly setup. Look at firebase_dynamic_links/README.md for more "
+      "details.";
+
+
+  void initDynamicLinks() async {
+    final PendingDynamicLinkData data =
+        await FirebaseDynamicLinks.instance.getInitialLink();
+    final Uri deepLink = data?.link;
+
+    if (deepLink != null) {
+      Navigator.pushNamed(context, deepLink.path);
+    }
+
+    FirebaseDynamicLinks.instance.onLink(
+        onSuccess: (PendingDynamicLinkData dynamicLink) async {
+      final Uri deepLink = dynamicLink?.link;
+
+      if (deepLink != null) {
+        Navigator.pushNamed(context, deepLink.path);
+      }
+    }, onError: (OnLinkErrorException e) async {
+      print('onLinkError');
+      print(e.message);
+    });
+  }
+
+  Future<void> _createDynamicLink(bool short) async {
+    setState(() {
+      _isCreatingLink = true;
+    });
+
+    final DynamicLinkParameters parameters = DynamicLinkParameters(
+      uriPrefix: 'http://www.copay.foundation',
+      link: Uri.parse('http://www.copay.foundation'),
+      androidParameters: AndroidParameters(
+        packageName: 'com.copay.portal',
+        minimumVersion: 0,
+      ),
+      dynamicLinkParametersOptions: DynamicLinkParametersOptions(
+        shortDynamicLinkPathLength: ShortDynamicLinkPathLength.short,
+      ),
+      iosParameters: IosParameters(
+        bundleId: 'com.copay.portal',
+        minimumVersion: '0',
+      ),
+    );
+
+    Uri url;
+    if (short) {
+      final ShortDynamicLink shortLink = await parameters.buildShortLink();
+      url = shortLink.shortUrl;
+    } else {
+      url = await parameters.buildUrl();
+    }
+
+    setState(() {
+      _linkMessage = url.toString();
+      _isCreatingLink = false;
+    });
+  }
+
   
   void _handleRadioValueChange1(int value) {
     setState(() {
@@ -265,6 +334,7 @@ class _RaiseRequestState extends State<RaiseRequest> {
     setState(() {
       feedbackBy = email;
     });
+    initDynamicLinks();
     //getRequestByCodeStream(code);
   }
 
@@ -587,10 +657,11 @@ class _RaiseRequestState extends State<RaiseRequest> {
       );
 
 Future<void> share(String title, String desc, String link, String amount) async {
+    final deeplink = await _createDynamicLink(false);
     await FlutterShare.share(
       title: '[CoPay] Need Help For: $title',
       text: 'Purpose: $desc\nDonation Request for: $amount\n\nRegards, CoPay',
-      linkUrl: link,
+      linkUrl: _linkMessage != null ? _linkMessage : link,
       chooserTitle: title
     );
   }
@@ -603,10 +674,11 @@ Future<void> share(String title, String desc, String link, String amount) async 
       filePath: link,
       chooserTitle: title
     );*/
+    final deeplink = await _createDynamicLink(false);
     await FlutterShare.share(
       title: '[CoPay] Need Help For: $title',
       text: 'Purpose: $desc\nDonation Request for: $amount\n\nRegards, CoPay',
-      linkUrl: link,
+      linkUrl: _linkMessage != null ? _linkMessage : link,
       chooserTitle: title
     );
   }
@@ -952,8 +1024,8 @@ users.take(1).forEach((c) async {
                         title: 'Share with Donor via',
                         content:
                             'Your contacts or\nWhatsapp/Facebook etc',
-                        cancelActionText: 'Others',
-                        defaultActionText: 'Donor',
+                        cancelActionText: 'WhatsApp',
+                        defaultActionText: 'Contact',
                       ).show(context);
                       if (!shareOrDonor) {
                       String amttext = '${_requestCall.currency} ${_requestCall.amount}';
