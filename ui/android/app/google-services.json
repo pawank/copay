@@ -15,6 +15,30 @@
       },
       "oauth_client": [
         {
+          "client_id": "363814251128-1k56t6tk1evfepakf6733ju9tjttnk44.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.copay.portal",
+            "certificate_hash": "d2861a5c19fd601c42c74c92e986f4e0f375f2d6"
+          }
+        },
+        {
+          "client_id": "363814251128-0fk4ebpcrqnohosej9qkore2o5rd0ijt.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.copay.portal",
+            "certificate_hash": "427072ac5c8321a30cdf5e75de803d79e9ef648f"
+          }
+        },
+        {
+          "client_id": "363814251128-3077ujaqjc5icujn8bkedk114oetcama.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.copay.portal",
+            "certificate_hash": "864c086fa1fe72fc31d5e5ec4699a38d53a46c08"
+          }
+        },
+        {
           "client_id": "363814251128-joednefcelgghh8dfic14uc84jkcm2ek.apps.googleusercontent.com",
           "client_type": 1,
           "android_info": {
@@ -38,6 +62,13 @@
             {
               "client_id": "363814251128-5b9eor4lut4n4k11dmf3crn0ni7uiokm.apps.googleusercontent.com",
               "client_type": 3
+            },
+            {
+              "client_id": "363814251128-qjatp95sfrunj7hgrhovlmnitn2ttn61.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.copay.portal"
+              }
             }
           ]
         }
