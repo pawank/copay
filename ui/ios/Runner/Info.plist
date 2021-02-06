@@ -11,15 +11,13 @@
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleName</key>
-	<string>CoPay</string>
+	<string>CoPay - Trust driven donations</string>
 	<key>CFBundlePackageType</key>
 	<string>APPL</string>
 	<key>CFBundleShortVersionString</key>
 	<string>$(MARKETING_VERSION)</string>
 	<key>CFBundleSignature</key>
 	<string>????</string>
-	<key>LSRequiresIPhoneOS</key>
-	<true/>
 	<key>CFBundleURLTypes</key>
 	<array>
 		<dict>
@@ -33,19 +31,33 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>$(CURRENT_PROJECT_VERSION)</string>
+	<key>LSRequiresIPhoneOS</key>
+	<true/>
 	<key>NSAppTransportSecurity</key>
 	<dict>
 		<key>NSAllowsArbitraryLoads</key>
 		<true/>
 	</dict>
+	<key>NSAppleMusicUsageDescription</key>
+	<string>Part of dependent lib for sharing audio or video with your contacts</string>
+	<key>NSCalendarsUsageDescription</key>
+	<string>Part of dependent lib for sharing requests with your contacts</string>
 	<key>NSCameraUsageDescription</key>
 	<string>Can I use the camera for allowing you to take feedback pics and short feedback clips, please?</string>
 	<key>NSContactsUsageDescription</key>
 	<string>App requires contacts access to function properly. It is required for sharing requests with your friends.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>Location information for building trust withing your circle or with contacts where requests are being shared</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>Location information for building trust withing your circle or with contacts where requests are being shared</string>
 	<key>NSMicrophoneUsageDescription</key>
 	<string>Can I use the mic for video clips for feedback, please?</string>
+	<key>NSMotionUsageDescription</key>
+	<string>Part of dependent lib for sharing audio or video with your contacts</string>
 	<key>NSPhotoLibraryUsageDescription</key>
 	<string>Can the app use photo library for uploading selected images for requests feedback?</string>
+	<key>NSSpeechRecognitionUsageDescription</key>
+	<string>Part of dependent lib for sharing audio or video with your contacts</string>
 	<key>UILaunchStoryboardName</key>
 	<string>LaunchScreen</string>
 	<key>UIMainStoryboardFile</key>

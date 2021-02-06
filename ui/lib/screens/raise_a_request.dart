@@ -867,37 +867,50 @@ await Firestore.instance.runTransaction((Transaction tx) async {
 Future<void> shareViaContactOrApps() async {
       final perm = await checkAndRequestPermissionForContacts();
       if (perm) {
-
-      contact_select.Contact contact = await _contactPicker.selectContact();
+        bool isContactOk = false;
+        if (Platform.isIOS) {
+            isContactOk = true;
+        } else {
+              contact_select.Contact contact = await _contactPicker.selectContact();
               setState(() {
                 _contact = contact;
               });
-              if (_contact != null) {
+              if (contact != null) {
+                isContactOk = true;
+              }
+        }
+    String email = null;
+    String tmpName = '';
+    Iterable<Contact> users = Iterable.empty();
+              if (isContactOk) {
+                if (Platform.isAndroid) {
                 //print('Sending API request for contact = $_contact');
                 // Get contacts matching a string
-Iterable<Contact> users = await ContactsService.getContacts(query : _contact.fullName);
+users = await ContactsService.getContacts(query : _contact.fullName);
 //print('No. of matching contact found = ${users.length} for query = ${_contact.fullName}');
 users.take(1).forEach((c) async {
-    String email = null;
     if (c.emails != null) {
       if (c.emails.isNotEmpty) {
         //email = c.emails.firstWhere((e) => e.value.isNotEmpty).value;
+        tmpName = c.displayName;
       }
     }
+});
+                }
     if ((email == null) || (email.isEmpty)) {
-      final emailResult = await _asyncInputDialog(context, 'Found ${users.length} friends with matching name.');
+      final emailResult = Platform.isAndroid ? await _asyncInputDialog(context, 'Found ${users.length} friends with matching name.') :  await _asyncInputDialog(context, 'Name of person');
       //print(emailResult);
       email = _friendContactEmail;
     }
     final owner = {
-      'name':user.displayName,
+      'name': user.displayName == null ? '' : user.displayName,
       'email':user.email
    };
    final donor = {
-      'name':c.displayName,
+      'name': tmpName == null ? '' : tmpName,
       'email': email
    };
-                final request_json = {
+   final request_json = {
    'owner':owner,
    'donor': donor,
    'campaign':{
@@ -912,7 +925,7 @@ users.take(1).forEach((c) async {
                       final yesno = await PlatformAlertDialog(
                         title: 'Send Donation Request?',
                         content:
-                            'You are asking, \"${c.displayName}\" for donation.',
+                            'You are asking, \"${tmpName}\" for donation.',
                         cancelActionText: Strings.cancel,
                         defaultActionText: 'Send',
                       ).show(context);
@@ -958,7 +971,6 @@ users.take(1).forEach((c) async {
                           _loadingMessage = 'Loading...';
                           _isLoading = false;
                         });
-});
               }
       } else {
 

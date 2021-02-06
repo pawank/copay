@@ -273,6 +273,15 @@ class _UserProfileState extends State<UserProfile> {
           appBar: AppBar(
             backgroundColor: Colors.transparent,
             elevation: 0,
+            leading: 
+              IconButton(
+                key: Key('ProfileBack'),
+                icon: Icon(Icons.arrow_back),
+                color: Colors.black54,
+                onPressed: () async {
+                  Navigator.pop(context);
+                }
+              ),
             actions: <Widget>[
               IconButton(
                 key: Key(Keys.logout),
